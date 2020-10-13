@@ -95,9 +95,13 @@
     <Compile Include="DefinedProtocol.cs" />
     <Compile Include="DefinedStructure.cs" />
     <Compile Include="MainServer.cs" />
+    <Compile Include="PacketClass.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerInfo.cs" />
+    <Compile Include="SocketClass.cs" />
+    <Compile Include="SocketManagerClass.cs" />
+    <Compile Include="UpgradeServer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
