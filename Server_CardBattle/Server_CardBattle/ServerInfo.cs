@@ -17,6 +17,9 @@ namespace Server_CardBattle
             public int _currentMember;
             public List<long> _memberIdx;
             public int _currentOrderIdx;
+            public List<CardBattleAI> _AI;
+            public int _currentAIOrder;
+            public bool _isAITurn;
         }
     }
 }

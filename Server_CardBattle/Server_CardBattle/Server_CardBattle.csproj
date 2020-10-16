@@ -91,6 +91,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CardBattleAI.cs" />
     <Compile Include="ConvertPacket.cs" />
     <Compile Include="DefinedProtocol.cs" />
     <Compile Include="DefinedStructure.cs" />

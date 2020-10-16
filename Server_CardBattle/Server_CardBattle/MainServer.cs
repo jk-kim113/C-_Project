@@ -227,6 +227,8 @@ namespace Server_CardBattle
                                     roomInfo._memberIdx.Add(fPacket._UUID);
                                     roomInfo._currentOrderIdx = 0;
 
+                                    logMessage = string.Format("{0} 유저가 {1}번 방을 만들었습니다.", _clientsDic[fPacket._UUID]._name, _currentRoomNumber);
+
                                     _roomInfoDic.Add(_currentRoomNumber, roomInfo);
                                     _currentRoomNumber++;
 
@@ -248,24 +250,33 @@ namespace Server_CardBattle
                                         {
                                             ToPacket(DefinedProtocol.eToClient.SuccessEnterRoom, null, fPacket._UUID);
                                             EnterRoom(pEnterRoom._roomNumber, fPacket._UUID);
+
+                                            logMessage = string.Format("{0} 유저가 {1}번 방에 입장하였습니다.", _clientsDic[fPacket._UUID]._name, pEnterRoom._roomNumber);
                                         }
                                         else
                                         {
                                             ToPacket(DefinedProtocol.eToClient.FailEnterRoom, null, fPacket._UUID);
+                                            logMessage = string.Format("{0} 유저가 {1}번 방 입장에 실패하였습니다.", _clientsDic[fPacket._UUID]._name, pEnterRoom._roomNumber);
                                         }
                                     }
                                     else
                                     {
                                         ToPacket(DefinedProtocol.eToClient.SuccessEnterRoom, null, fPacket._UUID);
                                         EnterRoom(pEnterRoom._roomNumber, fPacket._UUID);
+
+                                        logMessage = string.Format("{0} 유저가 {1}번 방에 입장하였습니다.", _clientsDic[fPacket._UUID]._name, pEnterRoom._roomNumber);
                                     }
 
                                     if(_roomInfoDic[pEnterRoom._roomNumber]._memberIdx.Count >= 3)
                                     {
+                                        Console.WriteLine("{0}방에서 게임이 시작되었습니다.", pEnterRoom._roomNumber);
+
                                         DefinedStructure.Packet_NextTurn pNextTurn;
                                         pNextTurn._name = _clientsDic[_roomInfoDic[pEnterRoom._roomNumber]._memberIdx[_roomInfoDic[pEnterRoom._roomNumber]._currentOrderIdx]]._name;
 
-                                        for(int n = 0; n < _roomInfoDic[pEnterRoom._roomNumber]._memberIdx.Count; n++)
+                                        Console.WriteLine("이번 턴은 {0} 유저입니다.", pNextTurn._name);
+
+                                        for (int n = 0; n < _roomInfoDic[pEnterRoom._roomNumber]._memberIdx.Count; n++)
                                         {
                                             ToPacket(DefinedProtocol.eToClient.NextTurn, pNextTurn, _roomInfoDic[pEnterRoom._roomNumber]._memberIdx[n]);
                                         }
@@ -293,6 +304,8 @@ namespace Server_CardBattle
                                     pChooseInfo._cardImgIdx1 = _iconIndexesDic[pChooseCard._roomNumber][pChooseCard._cardIdx1];
                                     pChooseInfo._cardImgIdx2 = _iconIndexesDic[pChooseCard._roomNumber][pChooseCard._cardIdx2];
 
+                                    Console.WriteLine(string.Format("{0} 유저가 {1}번 카드와 {2}번 카드를 선택 하였습니다.", _clientsDic[fPacket._UUID]._name, pChooseCard._cardIdx1, pChooseCard._cardIdx2));
+
                                     for(int n = 0; n < _roomInfoDic[pChooseCard._roomNumber]._memberIdx.Count; n++)
                                     {
                                         ToPacket(DefinedProtocol.eToClient.ChooseInfo, pChooseInfo, _roomInfoDic[pChooseCard._roomNumber]._memberIdx[n]);
@@ -308,9 +321,13 @@ namespace Server_CardBattle
                                         pChooseResult._isSuccess = 0;
                                         _userScoreDic[pChooseCard._UUID]++;
                                         _selectedCardNum++;
+                                        Console.WriteLine(string.Format("{0} 유저가 카드를 성공적으로 골랐습니다.", _clientsDic[fPacket._UUID]._name));
                                     }   
                                     else
+                                    {
                                         pChooseResult._isSuccess = 1;
+                                        Console.WriteLine(string.Format("{0} 유저가 카드를 고르는데 실패했습니다.", _clientsDic[fPacket._UUID]._name));
+                                    }   
 
                                     for (int n = 0; n < _roomInfoDic[pChooseCard._roomNumber]._memberIdx.Count; n++)
                                     {
@@ -318,7 +335,8 @@ namespace Server_CardBattle
                                     }
 
                                     if(_selectedCardNum >= _cardCount / 2)
-                                    {   
+                                    {
+                                        Console.WriteLine(string.Format("{0}번 방에서 게임이 끝났습니다.", pChooseCard._roomNumber));
                                         int highScore = int.MinValue;
                                         long winPlayerUUID = 0;
 
@@ -330,6 +348,8 @@ namespace Server_CardBattle
                                                 winPlayerUUID = key;
                                             }
                                         }
+
+                                        Console.WriteLine(string.Format("{0}번 방의 게임 승자는 {1}입니다.", pChooseCard._roomNumber, _clientsDic[winPlayerUUID]._name));
 
                                         DefinedStructure.Packet_GameResult pGameResult;
                                         pGameResult._name = _clientsDic[winPlayerUUID]._name;
@@ -347,6 +367,8 @@ namespace Server_CardBattle
                                             _roomInfoDic[pChooseCard._roomNumber]._currentOrderIdx = 0;
 
                                         pNextTurn2._name = _clientsDic[_roomInfoDic[pChooseCard._roomNumber]._memberIdx[_roomInfoDic[pChooseCard._roomNumber]._currentOrderIdx]]._name;
+
+                                        Console.WriteLine("이번 턴은 {0} 유저입니다.", pNextTurn2._name);
 
                                         for (int n = 0; n < _roomInfoDic[pChooseCard._roomNumber]._memberIdx.Count; n++)
                                         {

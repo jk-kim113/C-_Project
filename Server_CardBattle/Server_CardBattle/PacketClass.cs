@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace Server_CardBattle
 {
     class PacketClass
     {
         int _protocolID;
-        int _castIdentifier;
-        long _uniqueUserIndex;
+        int _castIdentifier; // 소켓의 인덱스
+        long _uniqueUserIndex; // 유저의 UUID
         int _dataSize;
         byte[] _data;
 
@@ -24,6 +25,15 @@ namespace Server_CardBattle
 
         }
 
+        public PacketClass(int protocolID, byte[] data, int dataSize, int castIdentifier, long uuid)
+        {
+            _protocolID = protocolID;
+            _data = data;
+            _dataSize = dataSize;
+            _castIdentifier = castIdentifier;
+            _uniqueUserIndex = uuid;
+        }
+
         public PacketClass(int protocolID, byte[] data, int dataSize)
         {
             _protocolID = protocolID;
@@ -34,6 +44,8 @@ namespace Server_CardBattle
         public void CreatePacket(DefinedProtocol.eToClient toClientID, object str, long uuid)
         {
             _uniqueUserIndex = uuid;
+
+            //DefinedStructure.PacketInfo packet = ConvertPacket.CreatePack((int)toClientID, Marshal.SizeOf(str), ConvertPacket.StructureToByteArray(str));
 
             DefinedStructure.PacketInfo packet;
             packet._id = (int)toClientID;

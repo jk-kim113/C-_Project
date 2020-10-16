@@ -32,5 +32,16 @@ namespace Server_CardBattle
 
             return obj;
         }
+
+        public static DefinedStructure.PacketInfo CreatePack(int id, int size, byte[] data)
+        {
+            DefinedStructure.PacketInfo receivePack = new DefinedStructure.PacketInfo();
+            receivePack._id = id;
+            receivePack._totalSize = size;
+            receivePack._data = new byte[1016];
+            Array.Copy(data, receivePack._data, data.Length);
+
+            return receivePack;
+        }
     }
 }

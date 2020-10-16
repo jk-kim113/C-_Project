@@ -11,9 +11,8 @@ namespace Server_CardBattle
         static void Main(string[] args)
         {
             //MainServer server = new MainServer();
-            //server.MainLoop();
-
             UpgradeServer server = new UpgradeServer();
+            
             server.MainLoop();
 
             string exitOrder = string.Empty;
@@ -24,7 +23,6 @@ namespace Server_CardBattle
             while (!exitOrder.Equals("Exit"));
 
             server.ExitProgram();
-            //server.ExitProgram();
         }
     }
 }

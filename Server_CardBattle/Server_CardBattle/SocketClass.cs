@@ -11,8 +11,8 @@ namespace Server_CardBattle
     class SocketClass
     {
         Socket _mySocket;
-        long _uniqueIdx;
-        long _clientID;
+        long _uniqueIdx; // 소켓의 인덱스
+        long _clientID; // 클라이언트의 UUID
 
         public Socket _MySocket { get { return _mySocket; } }
         public long _UUID { get { return _clientID; } }
@@ -23,19 +23,22 @@ namespace Server_CardBattle
             _clientID = clientID;
         }
 
-        public void Connect(long uniqueIdx)
+        public void ConnectSocket(long uniqueIdx)
         {
             _uniqueIdx = uniqueIdx;
         }
 
-        public void Close()
+        public void CloseSocket()
         {
-
+            _mySocket.Shutdown(SocketShutdown.Both);
+            _mySocket.Close();
+            _mySocket = null;
         }
 
         public void SendBuffer(byte[] buffer)
         {
-            _mySocket.Send(buffer);
+            if(_mySocket != null)
+                _mySocket.Send(buffer);
         }
 
         public bool ReceiveBuffer(out byte[] buffer, out int recvLen)
