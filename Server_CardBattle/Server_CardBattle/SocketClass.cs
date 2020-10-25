@@ -17,15 +17,19 @@ namespace Server_CardBattle
         public Socket _MySocket { get { return _mySocket; } }
         public long _UUID { get { return _clientID; } }
 
-        public SocketClass(Socket socket, long clientID)
+        public SocketClass(Socket socket)
         {
             _mySocket = socket;
-            _clientID = clientID;
         }
 
         public void ConnectSocket(long uniqueIdx)
         {
             _uniqueIdx = uniqueIdx;
+        }
+
+        public void ConnectCompletely(long clientID)
+        {
+            _clientID = clientID;
         }
 
         public void CloseSocket()

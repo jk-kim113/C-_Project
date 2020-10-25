@@ -15,6 +15,11 @@ namespace Server_CardBattle
             socket.ConnectSocket(_socketList.Count - 1);
         }
 
+        public void SocketComplete(long uuid, int index)
+        {
+            _socketList[index].ConnectCompletely(uuid);
+        }
+
         public void AddFromQueue(Queue<PacketClass> fromClient)
         {
             if(_socketList.Count != 0)
@@ -43,11 +48,33 @@ namespace Server_CardBattle
             return packet;
         }
 
+        public PacketClass AddToQueue(DefinedProtocol.eToClient toClientID, object str, int castIdentifier)
+        {
+            PacketClass packet = new PacketClass();
+            packet.CreatePacket(toClientID, str, castIdentifier);
+
+            return packet;
+        }
+
+        public PacketClass AddToQueue(DefinedProtocol.eFromServer fromServerID, object str)
+        {
+            PacketClass packet = new PacketClass();
+            packet.CreatePacket(fromServerID, str);
+
+            return packet;
+        }
+
         public void Send(byte[] buffer, long uuid)
         {
             SocketClass socket = SearchByUUID(uuid);
             if (socket != null)
                 socket.SendBuffer(buffer);
+        }
+
+        public void Send(byte[] buffer, int index)
+        {   
+            if (_socketList[index] != null)
+                _socketList[index].SendBuffer(buffer);
         }
 
         public void SendAll(byte[] buffer)

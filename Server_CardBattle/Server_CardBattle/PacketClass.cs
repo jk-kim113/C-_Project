@@ -10,12 +10,13 @@ namespace Server_CardBattle
     class PacketClass
     {
         int _protocolID;
-        int _castIdentifier; // 소켓의 인덱스
+        int _castIdentifier = -999; // 소켓의 인덱스
         long _uniqueUserIndex; // 유저의 UUID
         int _dataSize;
         byte[] _data;
 
         public int _ProtocolID { get { return _protocolID; } }
+        public int _CastIdendifier { get { return _castIdentifier; } }
         public long _UUID { get { return _uniqueUserIndex; } }
         public byte[] _Data { get { return _data; } }
         
@@ -34,6 +35,13 @@ namespace Server_CardBattle
             _uniqueUserIndex = uuid;
         }
 
+        public PacketClass(int protocolID, byte[] data, int dataSize, int castIdentifier)
+        {
+            _protocolID = protocolID;
+            _data = data;
+            _dataSize = dataSize;
+            _castIdentifier = castIdentifier;
+        }
         public PacketClass(int protocolID, byte[] data, int dataSize)
         {
             _protocolID = protocolID;
@@ -47,8 +55,25 @@ namespace Server_CardBattle
 
             //DefinedStructure.PacketInfo packet = ConvertPacket.CreatePack((int)toClientID, Marshal.SizeOf(str), ConvertPacket.StructureToByteArray(str));
 
+            MakePacket((int)toClientID, str);
+        }
+
+        public void CreatePacket(DefinedProtocol.eToClient toClientID, object str, int castIdentifier)
+        {
+            _castIdentifier = castIdentifier;
+
+            MakePacket((int)toClientID, str);
+        }
+
+        public void CreatePacket(DefinedProtocol.eFromServer fromServerID, object str)
+        {
+            MakePacket((int)fromServerID, str);
+        }
+
+        void MakePacket(int packetID, object str)
+        {
             DefinedStructure.PacketInfo packet;
-            packet._id = (int)toClientID;
+            packet._id = packetID;
             packet._data = new byte[1024];
 
             if (str != null)

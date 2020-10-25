@@ -10,18 +10,32 @@ namespace Server_CardBattle
     {
         public enum eFromClient
         {
-            Connect,
+            OverlapCheck_ID,
+            JoinGame,
+
+            LogIn,
+            MyInfo,
 
             ChooseCard,
             CreateRoom,
             EnterRoom,
+            ExitRoom,
+
+            AddAI,
+
+            Ready,
+            GameStart,
 
             end
         }
 
         public enum eToClient
         {
-            CheckConnect,
+            CompleteJoin,
+
+            OverlapCheckResult_ID,
+            LogInResult,
+
             ShowRoomInfo,
             ShowUserInfo,
 
@@ -29,12 +43,36 @@ namespace Server_CardBattle
             SuccessEnterRoom,
             FailEnterRoom,
 
+            ShowExit,
+            ShowMaster,
+            ShowReady,
+            CanPlay,
+
             GameStart,
             NextTurn,
             ChooseInfo,
             ChooseResult,
 
             GameResult,
+
+            end
+        }
+
+        public enum eFromServer
+        {
+            OverlapCheck_ID,
+            JoinGame,
+            LogIn,
+            EnrollUserInfo,
+
+            end
+        }
+
+        public enum eToServer
+        {
+            OverlapCheckResult_ID,
+            CompleteJoin,
+            LogInResult,
 
             end
         }

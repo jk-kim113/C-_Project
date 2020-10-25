@@ -14,12 +14,23 @@ namespace Server_CardBattle
             public string _name;
             public bool _isLock;
             public string _pw;
+            public long _masterUUID;
             public int _currentMember;
-            public List<long> _memberIdx;
-            public int _currentOrderIdx;
+
+            public long[] _slot;
             public List<CardBattleAI> _AI;
-            public int _currentAIOrder;
-            public bool _isAITurn;
+            public int _readyCount;
+            public int _currentOrder;
+
+            public DateTime _timeStart;
+            public DateTime _timeEnd;
+        }
+
+        public class UserInfo
+        {
+            public long _UUID;
+            public string _nickName;
+            public int _avatarIndex;
         }
     }
 }
