@@ -66,6 +66,8 @@ namespace Server_CardBattle
             LogIn,
             EnrollUserInfo,
 
+            ExitServer,
+
             end
         }
 

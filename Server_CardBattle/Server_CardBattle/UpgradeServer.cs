@@ -629,8 +629,11 @@ namespace Server_CardBattle
                                         ShowRoomList(pLogInResult._UUID);
 
                                 break;
+
                         }
                     }
+
+                    Thread.Sleep(10);
                 }
             }
             catch (ThreadInterruptedException e)
@@ -807,6 +810,8 @@ namespace Server_CardBattle
 
         public void ExitProgram()
         {
+            _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.ExitServer, null));
+
             if (_tAccept.IsAlive)
             {
                 _tAccept.Interrupt();
@@ -822,7 +827,7 @@ namespace Server_CardBattle
                 _tToClient.Interrupt();
                 _tToClient.Join();
             }
-            if(_tFromServer.IsAlive)
+            if (_tFromServer.IsAlive)
             {
                 _tFromServer.Interrupt();
                 _tFromServer.Join();

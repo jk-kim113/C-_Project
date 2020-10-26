@@ -15,6 +15,8 @@ namespace DB_CardBattle
             LogIn,
             EnrollUserInfo,
 
+            ExitServer,
+
             end
         }
 

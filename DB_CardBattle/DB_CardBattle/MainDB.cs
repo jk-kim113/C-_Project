@@ -152,8 +152,18 @@ namespace DB_CardBattle
                                 EnrollUserInfo(pMyInfo._UUID, pMyInfo._name, pMyInfo._avatarIndex);
 
                                 break;
+
+                            case DefinedProtocol.eFromServer.ExitServer:
+
+                                _conncetServer.Shutdown(SocketShutdown.Both);
+                                _conncetServer.Close();
+                                _conncetServer = null;
+
+                                break;
                         }
                     }
+
+                    Thread.Sleep(10);
                 }
             }
             catch (ThreadInterruptedException e)
@@ -537,10 +547,17 @@ namespace DB_CardBattle
             packet._id = (int)toServer;
             packet._data = new byte[1024];
 
-            byte[] temp = ConvertPacket.StructureToByteArray(str);
-            for (int n = 0; n < temp.Length; n++)
-                packet._data[n] = temp[n];
-            packet._totalSize = temp.Length;
+            if (str != null)
+            {
+                byte[] temp = ConvertPacket.StructureToByteArray(str);
+                for (int n = 0; n < temp.Length; n++)
+                    packet._data[n] = temp[n];
+                packet._totalSize = temp.Length;
+            }
+            else
+            {
+                packet._totalSize = packet._data.Length;
+            }
 
             _toServerQueue.Enqueue(ConvertPacket.StructureToByteArray(packet));
         }
