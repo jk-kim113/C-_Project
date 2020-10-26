@@ -9,8 +9,7 @@ namespace Server_CardBattle
     class Program
     {
         static void Main(string[] args)
-        {
-            //MainServer server = new MainServer();
+        {   
             UpgradeServer server = new UpgradeServer();
             
             server.MainLoop();

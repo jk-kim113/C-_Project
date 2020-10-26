@@ -26,7 +26,6 @@ namespace Server_CardBattle
         Queue<PacketClass> _fromServerQueue = new Queue<PacketClass>();
         Queue<PacketClass> _toServerQueue = new Queue<PacketClass>();
 
-        Dictionary<long, int> _userScoreDic = new Dictionary<long, int>();
         Dictionary<int, int> _selectedCardNumDic = new Dictionary<int, int>();
         Dictionary<int, ServerInfo.RoomInfo> _roomInfoDic = new Dictionary<int, ServerInfo.RoomInfo>();
         Dictionary<long, ServerInfo.UserInfo> _connectUserInfo = new Dictionary<long, ServerInfo.UserInfo>();
@@ -201,6 +200,10 @@ namespace Server_CardBattle
                                     roomInfo._slot = new long[8];
                                     roomInfo._AI = new List<CardBattleAI>();
                                     roomInfo._readyCount = 0;
+                                    roomInfo._currentOrder = 0;
+                                    roomInfo._score = new int[8];
+
+                                    roomInfo._slot[0] = packet._UUID;
 
                                     logMessage = string.Format("{0} 유저가 {1}번 방을 만들었습니다.", packet._UUID, _currentRoomNumber);
 
@@ -212,6 +215,8 @@ namespace Server_CardBattle
                                     pAfterCreateRoom._roomNumber = roomInfo._roomNumber;
 
                                     _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.AfterCreateRoom, pAfterCreateRoom, packet._UUID));
+
+                                    ShowRoomList(-999);
 
                                     break;
 
@@ -239,6 +244,8 @@ namespace Server_CardBattle
                                         logMessage = string.Format("{0} 유저가 {1}번 방에 입장하였습니다.", packet._UUID, pEnterRoom._roomNumber);
                                     }
 
+                                    ShowRoomList(-999);
+
                                     break;
 
                                 case DefinedProtocol.eFromClient.ExitRoom:
@@ -249,7 +256,7 @@ namespace Server_CardBattle
                                     _roomInfoDic[pExitRoom._roomNumber]._slot[pExitRoom._slotIndex] = 0;
                                     _roomInfoDic[pExitRoom._roomNumber]._currentMember--;
 
-                                    if (_roomInfoDic[pExitRoom._roomNumber]._currentMember == 0)
+                                    if (_roomInfoDic[pExitRoom._roomNumber]._currentMember <= _roomInfoDic[pExitRoom._roomNumber]._AI.Count)
                                     {
                                         _roomInfoDic.Remove(pExitRoom._roomNumber);
                                     }
@@ -278,7 +285,8 @@ namespace Server_CardBattle
                                         SendBufferInRoom(DefinedProtocol.eToClient.ShowExit, _roomInfoDic[pExitRoom._roomNumber]._slot, pShowExit);
                                     }
 
-                                    ShowRoomList(pExitRoom._UUID);
+                                    //ShowRoomList(pExitRoom._UUID);
+                                    ShowRoomList(-999);
 
                                     break;
 
@@ -290,7 +298,7 @@ namespace Server_CardBattle
                                     _roomInfoDic[pReady._roomNumber]._readyCount++;
 
                                     DefinedStructure.Packet_ShowReady pShowReady;
-                                    pShowReady._name = pReady._name;
+                                    pShowReady._slotIndex = pReady._slotIndex;
 
                                     SendBufferInRoom(DefinedProtocol.eToClient.ShowReady, _roomInfoDic[pReady._roomNumber]._slot, pShowReady);
 
@@ -325,7 +333,7 @@ namespace Server_CardBattle
                                     if (_roomInfoDic[pGameStart._roomNumber]._slot[_roomInfoDic[pGameStart._roomNumber]._currentOrder] > 0)
                                         pNextTurn._name = _connectUserInfo[_roomInfoDic[pGameStart._roomNumber]._slot[_roomInfoDic[pGameStart._roomNumber]._currentOrder]]._nickName;
                                     else if (_roomInfoDic[pGameStart._roomNumber]._slot[_roomInfoDic[pGameStart._roomNumber]._currentOrder] < 0)
-                                        pNextTurn._name = "AI"; // TODO AI Name
+                                        pNextTurn._name = "AI" + Math.Abs(_roomInfoDic[pGameStart._roomNumber]._slot[_roomInfoDic[pGameStart._roomNumber]._currentOrder]);
 
                                     Console.WriteLine("이번 턴은 {0} 유저입니다.", pNextTurn._name);
 
@@ -345,6 +353,17 @@ namespace Server_CardBattle
                                     _roomInfoDic[pAddAI._roomNumber]._currentMember++;
                                     _roomInfoDic[pAddAI._roomNumber]._readyCount++;
                                     _roomInfoDic[pAddAI._roomNumber]._AI.Add(new CardBattleAI(CardBattleAI.eAIDifficulty.Hard));
+                                    _roomInfoDic[pAddAI._roomNumber]._slot[pAddAI._index] = -_roomInfoDic[pAddAI._roomNumber]._AI.Count;
+
+                                    DefinedStructure.Packet_ShowAI pShowAI;
+                                    pShowAI._slotIndex = pAddAI._index;
+                                    pShowAI._aiName = "AI" + _roomInfoDic[pAddAI._roomNumber]._AI.Count.ToString();
+
+                                    SendBufferInRoom(DefinedProtocol.eToClient.ShowAI, _roomInfoDic[pAddAI._roomNumber]._slot, pShowAI);
+
+                                    Console.WriteLine("{0}가 추가되었습니다.", pShowAI._aiName);
+
+                                    ShowRoomList(-999);
 
                                     break;
 
@@ -367,7 +386,15 @@ namespace Server_CardBattle
                                     SendBufferInRoom(DefinedProtocol.eToClient.ChooseInfo, _roomInfoDic[pChooseCard._roomNumber]._slot, pChooseInfo);
 
                                     DefinedStructure.Packet_ChooseResult pChooseResult;
-                                    pChooseResult._name = _roomInfoDic[pChooseCard._roomNumber]._isAITurn ? "AI" : _connectUserInfo[pChooseCard._UUID]._nickName;
+                                    pChooseResult._name = string.Empty;
+
+                                    Console.WriteLine(_roomInfoDic[pChooseCard._roomNumber]._slot[pChooseCard._slotIndex]);
+
+                                    if (_roomInfoDic[pChooseCard._roomNumber]._slot[pChooseCard._slotIndex] > 0)
+                                        pChooseResult._name = _connectUserInfo[pChooseCard._UUID]._nickName;
+                                    else if (_roomInfoDic[pChooseCard._roomNumber]._slot[pChooseCard._slotIndex] < 0)
+                                        pChooseResult._name = "AI" + Math.Abs(_roomInfoDic[pChooseCard._roomNumber]._slot[pChooseCard._slotIndex]).ToString();
+
                                     pChooseResult._cardIdx1 = pChooseCard._cardIdx1;
                                     pChooseResult._cardIdx2 = pChooseCard._cardIdx2;
 
@@ -375,13 +402,9 @@ namespace Server_CardBattle
                                     {
                                         pChooseResult._isSuccess = 0;
 
-                                        if (!_roomInfoDic[pChooseCard._roomNumber]._isAITurn)
-                                            _userScoreDic[pChooseCard._UUID]++;
+                                        _roomInfoDic[pChooseCard._roomNumber]._score[pChooseCard._slotIndex]++;
 
                                         _selectedCardNumDic[pChooseCard._roomNumber]++;
-
-                                        if (!_roomInfoDic[pChooseCard._roomNumber]._isAITurn)
-                                            Console.WriteLine(string.Format("{0} 유저가 카드를 성공적으로 골랐습니다.", packet._UUID));
 
                                         _isClickableDic[pChooseCard._roomNumber][pChooseCard._cardIdx1] = true;
                                         _isClickableDic[pChooseCard._roomNumber][pChooseCard._cardIdx2] = true;
@@ -392,14 +415,12 @@ namespace Server_CardBattle
                                     else
                                     {
                                         pChooseResult._isSuccess = 1;
-                                        if (!_roomInfoDic[pChooseCard._roomNumber]._isAITurn)
-                                            Console.WriteLine(string.Format("{0} 유저가 카드를 고르는데 실패했습니다.", packet._UUID));
-
+                                        
                                         for (int n = 0; n < _roomInfoDic[pChooseCard._roomNumber]._AI.Count; n++)
                                             _roomInfoDic[pChooseCard._roomNumber]._AI[n].SaveMemory(pChooseCard._cardIdx1, pChooseCard._cardIdx2);
                                     }
 
-                                    SendBufferInRoom(DefinedProtocol.eToClient.ChooseResult, _roomInfoDic[pChooseCard._roomNumber]._memberIdx, pChooseResult);
+                                    SendBufferInRoom(DefinedProtocol.eToClient.ChooseResult, _roomInfoDic[pChooseCard._roomNumber]._slot, pChooseResult);
 
                                     if (_selectedCardNumDic[pChooseCard._roomNumber] >= _cardCount / 2)
                                     {
@@ -407,60 +428,65 @@ namespace Server_CardBattle
 
                                         Console.WriteLine(string.Format("{0}번 방에서 게임이 끝났습니다.", pChooseCard._roomNumber));
                                         int highScore = int.MinValue;
-                                        long winPlayerUUID = 0;
+                                        long winPlayerIndex = 0;
 
-                                        foreach (long key in _userScoreDic.Keys)
+                                        for(int n = 0; n < _roomInfoDic[pChooseCard._roomNumber]._score.Length; n++)
                                         {
-                                            if (highScore < _userScoreDic[key])
+                                            if (highScore < _roomInfoDic[pChooseCard._roomNumber]._score[n])
                                             {
-                                                highScore = _userScoreDic[key];
-                                                winPlayerUUID = key;
+                                                highScore = _roomInfoDic[pChooseCard._roomNumber]._score[n];
+                                                winPlayerIndex = _roomInfoDic[pChooseCard._roomNumber]._slot[n];
                                             }
-                                        }
+                                        }   
 
-                                        Console.WriteLine(string.Format("{0}번 방의 게임 승자는 {1}입니다.", pChooseCard._roomNumber, winPlayerUUID));
+                                        Console.WriteLine(string.Format("{0}번 방의 게임 승자는 {1}입니다.", pChooseCard._roomNumber, winPlayerIndex));
 
                                         DefinedStructure.Packet_GameResult pGameResult;
-                                        pGameResult._name = _connectUserInfo[winPlayerUUID]._nickName;
+                                        pGameResult._name = string.Empty;
+                                        if (winPlayerIndex > 0)
+                                            pGameResult._name = _connectUserInfo[winPlayerIndex]._nickName;
+                                        else if (winPlayerIndex < 0)
+                                            pGameResult._name = "AI" + Math.Abs(winPlayerIndex).ToString();
 
-                                        SendBufferInRoom(DefinedProtocol.eToClient.GameResult, _roomInfoDic[pChooseCard._roomNumber]._memberIdx, pGameResult);
+
+                                        SendBufferInRoom(DefinedProtocol.eToClient.GameResult, _roomInfoDic[pChooseCard._roomNumber]._slot, pGameResult);
+
+                                        for(int n = 0; n < _roomInfoDic[pChooseCard._roomNumber]._score.Length; n++)
+                                            _roomInfoDic[pChooseCard._roomNumber]._score[n] = 0;
+
+                                        _roomInfoDic[pChooseCard._roomNumber]._readyCount = _roomInfoDic[pChooseCard._roomNumber]._AI.Count;
+                                        _isClickableDic.Remove(pChooseCard._roomNumber);
                                     }
                                     else
                                     {
                                         DefinedStructure.Packet_NextTurn pNextTurn2;
+                                        pNextTurn2._name = string.Empty;
 
-                                        if (!_roomInfoDic[pChooseCard._roomNumber]._isAITurn)
+                                        if (++_roomInfoDic[pChooseCard._roomNumber]._currentOrder >= _roomInfoDic[pChooseCard._roomNumber]._slot.Length)
+                                            _roomInfoDic[pChooseCard._roomNumber]._currentOrder = 0;
+
+                                        while (_roomInfoDic[pChooseCard._roomNumber]._slot[_roomInfoDic[pChooseCard._roomNumber]._currentOrder] == 0)
                                         {
-                                            if (++_roomInfoDic[pChooseCard._roomNumber]._currentOrderIdx >= _roomInfoDic[pChooseCard._roomNumber]._memberIdx.Count)
-                                            {
-                                                _roomInfoDic[pChooseCard._roomNumber]._isAITurn = true;
-                                                _roomInfoDic[pChooseCard._roomNumber]._currentOrderIdx = 0;
-                                                pNextTurn2._name = "AI";
-                                                TurnAI(pChooseCard._roomNumber, _roomInfoDic[pChooseCard._roomNumber]._AI[_roomInfoDic[pChooseCard._roomNumber]._currentAIOrder]);
-                                            }
-                                            else
-                                            {
-                                                pNextTurn2._name = _connectUserInfo[_roomInfoDic[pChooseCard._roomNumber]._memberIdx[_roomInfoDic[pChooseCard._roomNumber]._currentOrderIdx]]._nickName;
-                                            }
+                                            _roomInfoDic[pChooseCard._roomNumber]._currentOrder++;
+
+                                            if (_roomInfoDic[pChooseCard._roomNumber]._currentOrder >= _roomInfoDic[pChooseCard._roomNumber]._slot.Length)
+                                                _roomInfoDic[pChooseCard._roomNumber]._currentOrder = 0;
                                         }
-                                        else
+
+                                        if (_roomInfoDic[pChooseCard._roomNumber]._slot[_roomInfoDic[pChooseCard._roomNumber]._currentOrder] > 0)
                                         {
-                                            if(++_roomInfoDic[pChooseCard._roomNumber]._currentAIOrder >= _roomInfoDic[pChooseCard._roomNumber]._AI.Count)
-                                            {
-                                                _roomInfoDic[pChooseCard._roomNumber]._isAITurn = false;
-                                                _roomInfoDic[pChooseCard._roomNumber]._currentAIOrder = 0;
-                                                pNextTurn2._name = _connectUserInfo[_roomInfoDic[pChooseCard._roomNumber]._memberIdx[_roomInfoDic[pChooseCard._roomNumber]._currentOrderIdx]]._nickName;
-                                            }
-                                            else
-                                            {
-                                                pNextTurn2._name = "AI";
-                                                TurnAI(pChooseCard._roomNumber, _roomInfoDic[pChooseCard._roomNumber]._AI[_roomInfoDic[pChooseCard._roomNumber]._currentAIOrder]);
-                                            }
+                                            pNextTurn2._name = _connectUserInfo[_roomInfoDic[pChooseCard._roomNumber]._slot[_roomInfoDic[pChooseCard._roomNumber]._currentOrder]]._nickName;
+                                        }
+                                        else if(_roomInfoDic[pChooseCard._roomNumber]._slot[_roomInfoDic[pChooseCard._roomNumber]._currentOrder] < 0)
+                                        {
+                                            pNextTurn2._name = "AI" + Math.Abs(_roomInfoDic[pChooseCard._roomNumber]._slot[_roomInfoDic[pChooseCard._roomNumber]._currentOrder]).ToString();
+                                            
+                                            TurnAI(pChooseCard._roomNumber, _roomInfoDic[pChooseCard._roomNumber]._AI[Math.Abs((int)(_roomInfoDic[pChooseCard._roomNumber]._slot[_roomInfoDic[pChooseCard._roomNumber]._currentOrder])) - 1], _roomInfoDic[pChooseCard._roomNumber]._currentOrder);
                                         }
 
                                         Console.WriteLine("이번 턴은 {0} 유저입니다.", pNextTurn2._name);
 
-                                        SendBufferInRoom(DefinedProtocol.eToClient.NextTurn, _roomInfoDic[pChooseCard._roomNumber]._memberIdx, pNextTurn2);
+                                        SendBufferInRoom(DefinedProtocol.eToClient.NextTurn, _roomInfoDic[pChooseCard._roomNumber]._slot, pNextTurn2);
                                     }
 
                                     break;
@@ -661,7 +687,9 @@ namespace Server_CardBattle
                     _roomInfoDic[roomNum]._slot[n] = uuid;
                     _roomInfoDic[roomNum]._currentMember++;
 
-                    _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.SuccessEnterRoom, null, uuid));
+                    DefinedStructure.Packet_SuccessEnterRoom pSuccessEnter;
+                    pSuccessEnter._slotIndex = n;
+                    _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.SuccessEnterRoom, pSuccessEnter, uuid));
 
                     break;
                 }   
@@ -685,7 +713,11 @@ namespace Server_CardBattle
                 }
                 else if(_roomInfoDic[roomNum]._slot[n] < 0)
                 {
-                    //TODO AI
+                    DefinedStructure.Packet_ShowAI pShowAI;
+                    pShowAI._slotIndex = n;
+                    pShowAI._aiName = "AI" + Math.Abs(_roomInfoDic[roomNum]._slot[n]).ToString();
+
+                    _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowAI, pShowAI, uuid));
                 }
             }
 
@@ -704,7 +736,7 @@ namespace Server_CardBattle
             }   
         }
 
-        void TurnAI(int roomNum, CardBattleAI ai)
+        void TurnAI(int roomNum, CardBattleAI ai, int index)
         {
             int[] select;
 
@@ -723,7 +755,7 @@ namespace Server_CardBattle
                 {
                     select[1] = rd.Next(0, _cardCount);
                 }
-                while (select[0] == select[1] && _isClickableDic[roomNum][select[0]]);
+                while (select[0] == select[1] || _isClickableDic[roomNum][select[1]]);
             }
 
             DefinedStructure.Packet_ChooseCard pChooseCard;
@@ -731,6 +763,7 @@ namespace Server_CardBattle
             pChooseCard._roomNumber = roomNum;
             pChooseCard._cardIdx1 = select[0];
             pChooseCard._cardIdx2 = select[1];
+            pChooseCard._slotIndex = index;
 
             DefinedStructure.PacketInfo packetInfo;
             packetInfo._id = (int)DefinedProtocol.eFromClient.ChooseCard;

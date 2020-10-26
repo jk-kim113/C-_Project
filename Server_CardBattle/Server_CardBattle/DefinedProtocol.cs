@@ -46,6 +46,7 @@ namespace Server_CardBattle
             ShowExit,
             ShowMaster,
             ShowReady,
+            ShowAI,
             CanPlay,
 
             GameStart,

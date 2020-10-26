@@ -95,6 +95,8 @@ namespace DB_CardBattle
             public string _name;
             [MarshalAs(UnmanagedType.I4)]
             public int _avatarIndex;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _slotIndex;
         }
     }
 }

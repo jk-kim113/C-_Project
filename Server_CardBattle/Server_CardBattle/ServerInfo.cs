@@ -22,6 +22,8 @@ namespace Server_CardBattle
             public int _readyCount;
             public int _currentOrder;
 
+            public int[] _score;
+
             public DateTime _timeStart;
             public DateTime _timeEnd;
         }

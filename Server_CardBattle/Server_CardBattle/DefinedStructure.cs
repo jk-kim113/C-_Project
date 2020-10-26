@@ -123,6 +123,8 @@ namespace Server_CardBattle
             public int _cardIdx1;
             [MarshalAs(UnmanagedType.I4)]
             public int _cardIdx2;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _slotIndex;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -193,6 +195,13 @@ namespace Server_CardBattle
         }
 
         [StructLayout(LayoutKind.Sequential)]
+        public struct Packet_SuccessEnterRoom
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _slotIndex;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         public struct Packet_ExitRoom
         {
             [MarshalAs(UnmanagedType.I4)]
@@ -222,8 +231,8 @@ namespace Server_CardBattle
         {
             [MarshalAs(UnmanagedType.I4)]
             public int _roomNumber;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 20)]
-            public string _name;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _slotIndex;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -236,10 +245,19 @@ namespace Server_CardBattle
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct Packet_ShowReady
-        {   
+        public struct Packet_ShowAI
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _slotIndex;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 20)]
-            public string _name;
+            public string _aiName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Packet_ShowReady
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _slotIndex;
         }
 
         [StructLayout(LayoutKind.Sequential)]
