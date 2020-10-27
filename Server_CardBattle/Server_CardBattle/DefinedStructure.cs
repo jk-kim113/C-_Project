@@ -266,5 +266,16 @@ namespace Server_CardBattle
             [MarshalAs(UnmanagedType.I4)]
             public int _roomNumber;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Packet_SaveResult
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _clearTime;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _isWin;
+        }
     }
 }

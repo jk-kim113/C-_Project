@@ -17,6 +17,8 @@ namespace DB_CardBattle
 
             ExitServer,
 
+            SaveResult,
+
             end
         }
 

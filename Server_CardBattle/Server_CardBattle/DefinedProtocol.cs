@@ -68,6 +68,8 @@ namespace Server_CardBattle
 
             ExitServer,
 
+            SaveResult,
+
             end
         }
 

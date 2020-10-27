@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MySql.Data.MySqlClient;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -24,6 +23,42 @@ namespace DB_CardBattle
 
     class MainDB
     {
+        public enum eTableUserInfo
+        {
+            All,
+
+            UUID,
+            ID,
+            PW,
+            NickName,
+            AvatarIndex,
+
+            None
+        }
+
+        public enum eTableGameInfo
+        {
+            All,
+
+            UUID,
+            ClearStage,
+            MinClearTime,
+            TotalPlayCount,
+
+            None
+        }
+
+        public enum eTableTotalResult
+        {
+            All,
+
+            Index,
+            UUID,
+            IsWin,
+
+            None
+        }
+
         const short _port = 81;
         Socket _waitServer;
 
@@ -36,9 +71,12 @@ namespace DB_CardBattle
         Thread _tFromServer;
         Thread _tToServer;
 
+        DB_Query _dbQuery;
+
         public MainDB()
         {
             CreateServer();
+            _dbQuery = new DB_Query("127.0.0.1", "3306", "cardbattle", "root", "1234");
         }
 
         void CreateServer()
@@ -49,7 +87,8 @@ namespace DB_CardBattle
                 _waitServer.Bind(new IPEndPoint(IPAddress.Any, _port));
                 _waitServer.Listen(1);
 
-                Console.WriteLine("소켓이 만들어 졌습니다.");
+                Console.WriteLine("DB 서버가 생성되었습니다.");
+                Console.WriteLine("서버가 연결을 시도할 때 까지 대기 하십시오.");
             }
             catch (Exception ex)
             {
@@ -149,7 +188,7 @@ namespace DB_CardBattle
                                 DefinedStructure.Packet_MyInfo pMyInfo = new DefinedStructure.Packet_MyInfo();
                                 pMyInfo = (DefinedStructure.Packet_MyInfo)ConvertPacket.ByteArrayToStructure(packet._data, pMyInfo.GetType(), packet._totalSize);
 
-                                EnrollUserInfo(pMyInfo._UUID, pMyInfo._name, pMyInfo._avatarIndex);
+                                _dbQuery.UpdateUserInfo(pMyInfo._UUID, pMyInfo._name, pMyInfo._avatarIndex);
 
                                 break;
 
@@ -158,6 +197,15 @@ namespace DB_CardBattle
                                 _conncetServer.Shutdown(SocketShutdown.Both);
                                 _conncetServer.Close();
                                 _conncetServer = null;
+
+                                break;
+
+                            case DefinedProtocol.eFromServer.SaveResult:
+
+                                DefinedStructure.Packet_SaveResult pSaveResult = new DefinedStructure.Packet_SaveResult();
+                                pSaveResult = (DefinedStructure.Packet_SaveResult)ConvertPacket.ByteArrayToStructure(packet._data, pSaveResult.GetType(), packet._totalSize);
+
+                                SaveGameInfo(pSaveResult._UUID, pSaveResult._clearTime, pSaveResult._isWin);
 
                                 break;
                         }
@@ -198,349 +246,80 @@ namespace DB_CardBattle
 
         void OverlapCheck_ID(string id, int index)
         {
-            // Server = IP; Port = number; Database = model name; Uid = account ID; Pwd = password
-            using (MySqlConnection connection = new MySqlConnection("Server=127.0.0.1;Port=3306;Database=cardbattle;Uid=root;Pwd=1234;"))
-            {
-                connection.Open();
+            DefinedStructure.Packet_OverlapCheckResultID pOverlapResult;
+            pOverlapResult._index = index;
 
-                DefinedStructure.Packet_OverlapCheckResultID pOverlapResult;
-                pOverlapResult._index = index;
+            if (_dbQuery.SearchID(id))
+                pOverlapResult._result = 0;
+            else
+                pOverlapResult._result = 1;
 
-                if (SearchValue(connection, id))
-                    pOverlapResult._result = 0;
-                else
-                    pOverlapResult._result = 1;
+            ToPacket(DefinedProtocol.eToServer.OverlapCheckResult_ID, pOverlapResult);
 
-                ToPacket(DefinedProtocol.eToServer.OverlapCheckResult_ID, pOverlapResult);
-
-                connection.Close();
-            }
+            Console.WriteLine("{0} <- 해당 아이디는 중복이 {1}니다.", id, pOverlapResult._result == 0 ? "맞습" : "아닙");
         }
 
         void JoinGame(string id, string pw, int index)
         {
-            using (MySqlConnection connection = new MySqlConnection("Server=127.0.0.1;Port=3306;Database=cardbattle;Uid=root;Pwd=1234;"))
+            if (_dbQuery.InsertUserInfo(id, pw))
             {
-                connection.Open();
+                DefinedStructure.Packet_CompleteJoin pCompleteJoin;
+                pCompleteJoin._UUID = _dbQuery.SearchUUID(id);
+                pCompleteJoin._index = index;
 
-                if(InsertValue(connection, id, pw))
-                {
-                    DefinedStructure.Packet_CompleteJoin pCompleteJoin;
-                    pCompleteJoin._UUID = SearchUUID(connection, id);
-                    pCompleteJoin._index = index;
+                _dbQuery.InsertGameInfo(pCompleteJoin._UUID);
 
-                    InsertGameInfo(connection, pCompleteJoin._UUID);
+                ToPacket(DefinedProtocol.eToServer.CompleteJoin, pCompleteJoin);
 
-                    ToPacket(DefinedProtocol.eToServer.CompleteJoin, pCompleteJoin);
-                }
-
-                connection.Close();
+                Console.WriteLine("회원 등록이 완료되었습니다.");
             }
+
+            Console.WriteLine("회원 등록 과정에서 문제가 발견되었습니다.");
         }
 
         void LogIn(string id, string pw, int index)
         {
-            using (MySqlConnection connection = new MySqlConnection("Server=127.0.0.1;Port=3306;Database=cardbattle;Uid=root;Pwd=1234;"))
+            DefinedStructure.Packet_LogInResult pLogInResult;
+            pLogInResult._index = index;
+
+            if (_dbQuery.SearchLogIn(id, pw))
             {
-                connection.Open();
+                pLogInResult._UUID = _dbQuery.SearchUUID(id);
+                pLogInResult._name = _dbQuery.SearchNickName(pLogInResult._UUID);
+                pLogInResult._avatarIndex = _dbQuery.SearchAvatarIndex(pLogInResult._UUID);
+                pLogInResult._isSuccess = 0;
 
-                DefinedStructure.Packet_LogInResult pLogInResult;
-                pLogInResult._index = index;
-
-                if(SearchLogIn(connection, id, pw))
-                {
-                    pLogInResult._UUID = SearchUUID(connection, id);
-                    pLogInResult._name = SearchNickName(connection, pLogInResult._UUID);
-                    pLogInResult._avatarIndex = SearchAvatarIndex(connection, pLogInResult._UUID);
-                    pLogInResult._isSuccess = 0;
-
-                    if(SearchFirst(connection, id))
-                        pLogInResult._isFirst = 0;
-                    else
-                        pLogInResult._isFirst = 1;
-                }
-                else
-                {
-                    pLogInResult._UUID = 0;
-                    pLogInResult._name = string.Empty;
-                    pLogInResult._avatarIndex = -999;
-                    pLogInResult._isSuccess = 1;
+                if (_dbQuery.SearchIsFirstLogIn(id))
                     pLogInResult._isFirst = 0;
-                }
-
-                ToPacket(DefinedProtocol.eToServer.LogInResult, pLogInResult);
-
-                connection.Close();
-            }
-        }
-
-        void EnrollUserInfo(long uuid, string nickname, int avatar)
-        {
-            using (MySqlConnection connection = new MySqlConnection("Server=127.0.0.1;Port=3306;Database=cardbattle;Uid=root;Pwd=1234;"))
-            {
-                connection.Open();
-
-                UpdateUserInfo(connection, uuid, nickname, avatar);
-
-                connection.Close();
-            }
-        }
-
-        bool InsertValue(MySqlConnection connection, string id, string pw)
-        {
-            string insertQuery = string.Format("INSERT INTO userinfo(ID, PW) VALUES ('{0}','{1}');", id, pw);
-            
-            try
-            {
-                MySqlCommand command = new MySqlCommand(insertQuery, connection);
-
-                if (command.ExecuteNonQuery() == 1)
-                {
-                    Console.WriteLine("Insert Success");
-                    return true;
-                }
                 else
-                {
-                    Console.WriteLine("Insert Fail");
-                    return false;
-                }
-
+                    pLogInResult._isFirst = 1;
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine("연결 실패!!");
-                Console.WriteLine(ex.ToString());
-                return false;
+                pLogInResult._UUID = 0;
+                pLogInResult._name = string.Empty;
+                pLogInResult._avatarIndex = -999;
+                pLogInResult._isSuccess = 1;
+                pLogInResult._isFirst = 0;
             }
+
+            ToPacket(DefinedProtocol.eToServer.LogInResult, pLogInResult);
+
+            Console.WriteLine("로그인에 {0}했습니다.", pLogInResult._isSuccess == 0 ? "성공" : "실패");
         }
 
-        void InsertGameInfo(MySqlConnection connection, long uuid)
+        void SaveGameInfo(long uuid, int cleartime, int isWin)
         {
-            string insertQuery = string.Format("INSERT INTO gameinfo(UUID,ClearStage,MinClearTime,TotalPlayCount) VALUES ('{0}',{1},'{2}',{3});", uuid, 0, int.MaxValue, 0);
+            if (_dbQuery.SearchMinClearTime(uuid) > cleartime)
+                _dbQuery.UpdateClearTime(uuid, cleartime);
 
-            try
-            {
-                MySqlCommand command = new MySqlCommand(insertQuery, connection);
+            _dbQuery.UpdateTotalPlayCount(uuid);
 
-                if (command.ExecuteNonQuery() == 1)
-                {
-                    Console.WriteLine("Insert Success");
-                }
-                else
-                {
-                    Console.WriteLine("Insert Fail");
-                }
+            _dbQuery.InsertTotalResult(uuid, isWin);
 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("연결 실패!!");
-                Console.WriteLine(ex.ToString());
-            }
+            Console.WriteLine("{0} 유저의 게임결과를 저장했습니다.", uuid);
         }
-
-        bool SearchValue(MySqlConnection connection, string id)
-        {
-            string searchQuery = string.Format("SELECT * FROM userinfo WHERE ID = '{0}';", id);
-
-            try
-            {
-                MySqlCommand command = new MySqlCommand(searchQuery, connection);
-
-                MySqlDataReader table = command.ExecuteReader();
-
-                while (table.Read())
-                {
-                    if (table["ID"].ToString().Equals(id))
-                    {
-                        table.Close();
-                        return true;
-                    }
-                }
-
-                table.Close();
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("연결 실패!!");
-                Console.WriteLine(ex.ToString());
-                return false;
-            }
-        }
-
-        long SearchUUID(MySqlConnection connection, string id)
-        {
-            string searchQuery = string.Format("SELECT UUID FROM userinfo WHERE ID = '{0}';", id);
-
-            try
-            {
-                MySqlCommand command = new MySqlCommand(searchQuery, connection);
-
-                MySqlDataReader table = command.ExecuteReader();
-
-                while (table.Read())
-                {
-                    long uuid = long.Parse(table["UUID"].ToString());
-                    table.Close();
-                    return uuid;
-                }
-
-                table.Close();
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("연결 실패!!");
-                Console.WriteLine(ex.ToString());
-                return 0;
-            }
-        }
-
-        bool SearchLogIn(MySqlConnection connection, string id, string pw)
-        {
-            string searchQuery = string.Format("SELECT Pw FROM userinfo WHERE ID = '{0}';", id);
-
-            try
-            {
-                MySqlCommand command = new MySqlCommand(searchQuery, connection);
-
-                MySqlDataReader table = command.ExecuteReader();
-
-                while (table.Read())
-                {
-                    if (table["Pw"].ToString().Equals(pw))
-                    {
-                        table.Close();
-                        return true;
-                    }
-                }
-
-                table.Close();
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("연결 실패!!");
-                Console.WriteLine(ex.ToString());
-                return false;
-            }
-        }
-
-        bool SearchFirst(MySqlConnection connection, string id)
-        {
-            string searchQuery = string.Format("SELECT IFNULL(NickName, 'Empty') 'NickName' FROM userinfo WHERE ID = '{0}';", id);
-
-            try
-            {
-                MySqlCommand command = new MySqlCommand(searchQuery, connection);
-
-                MySqlDataReader table = command.ExecuteReader();
-
-                while (table.Read())
-                {
-                    if (table["NickName"].ToString().Equals("Empty"))
-                    {
-                        table.Close();
-                        return true;
-                    }
-                }
-
-                table.Close();
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("연결 실패!!");
-                Console.WriteLine(ex.ToString());
-                return false;
-            }
-        }
-
-        void UpdateUserInfo(MySqlConnection connection, long uuid, string nickname, int avatar)
-        {
-            string updateQuery = string.Format("UPDATE userinfo SET NickName='{0}',AvatarIndex={1} WHERE UUID={2};", nickname, avatar, uuid);
-
-            try
-            {
-                MySqlCommand command = new MySqlCommand(updateQuery, connection);
-
-                if (command.ExecuteNonQuery() == 1)
-                {
-                    Console.WriteLine("Update Success");
-                }
-                else
-                {
-                    Console.WriteLine("Update Fail");
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("연결 실패!!");
-                Console.WriteLine(ex.ToString());
-            }
-        }
-
-        string SearchNickName(MySqlConnection connection, long uuid)
-        {
-            string searchQuery = string.Format("SELECT NickName FROM userinfo WHERE UUID = '{0}';", uuid);
-
-            try
-            {
-                MySqlCommand command = new MySqlCommand(searchQuery, connection);
-
-                MySqlDataReader table = command.ExecuteReader();
-
-                while (table.Read())
-                {
-                    string nickname = table["NickName"].ToString();
-                    table.Close();
-                    return nickname;
-                }
-
-                table.Close();
-                return string.Empty;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("연결 실패!!");
-                Console.WriteLine(ex.ToString());
-                return string.Empty;
-            }
-        }
-
-        int SearchAvatarIndex(MySqlConnection connection, long uuid)
-        {
-            string searchQuery = string.Format("SELECT AvatarIndex FROM userinfo WHERE UUID = '{0}';", uuid);
-
-            try
-            {
-                MySqlCommand command = new MySqlCommand(searchQuery, connection);
-
-                MySqlDataReader table = command.ExecuteReader();
-
-                while (table.Read())
-                {
-                    int avatarIndex;
-                    if(int.TryParse(table["AvatarIndex"].ToString(), out avatarIndex))
-                    {
-                        table.Close();
-                        return avatarIndex;
-                    }
-                }
-
-                table.Close();
-                return -999;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("연결 실패!!");
-                Console.WriteLine(ex.ToString());
-                return -999;
-            }
-        }
-
+        
         void ToPacket(DefinedProtocol.eToServer toServer, object str)
         {
             DefinedStructure.PacketInfo packet;

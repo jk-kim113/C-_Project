@@ -90,6 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConvertPacket.cs" />
+    <Compile Include="DB_Query.cs" />
     <Compile Include="DefinedProtocol.cs" />
     <Compile Include="DefinedStructure.cs" />
     <Compile Include="MainDB.cs" />

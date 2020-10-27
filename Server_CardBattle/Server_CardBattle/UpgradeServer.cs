@@ -14,7 +14,7 @@ namespace Server_CardBattle
         const short _port = 80;
         Socket _waitServer;
 
-        const string _dbIP = "127.0.0.2";
+        const string _dbIP = "127.0.0.1";
         const int _dbPort = 81;
         Socket _dbServer;
 
@@ -72,7 +72,8 @@ namespace Server_CardBattle
                 _waitServer.Bind(new IPEndPoint(IPAddress.Any, _port));
                 _waitServer.Listen(1);
 
-                Console.WriteLine("소켓이 만들어 졌습니다.");
+                Console.WriteLine("서버가 만들어 졌습니다.");
+                Console.WriteLine("DB 서버와 연결하려면 Connect를 입력하세요.");
             }
             catch (Exception ex)
             {
@@ -456,6 +457,22 @@ namespace Server_CardBattle
 
                                         _roomInfoDic[pChooseCard._roomNumber]._readyCount = _roomInfoDic[pChooseCard._roomNumber]._AI.Count;
                                         _isClickableDic.Remove(pChooseCard._roomNumber);
+
+                                        TimeSpan timeDiff = _roomInfoDic[pChooseCard._roomNumber]._timeEnd - _roomInfoDic[pChooseCard._roomNumber]._timeStart;
+                                        double diffSecond = timeDiff.TotalSeconds;
+
+                                        for(int n = 0; n < _roomInfoDic[pChooseCard._roomNumber]._slot.Length; n++)
+                                        {
+                                            if(_roomInfoDic[pChooseCard._roomNumber]._slot[n] > 0)
+                                            {
+                                                DefinedStructure.Packet_SaveResult pSaveResult;
+                                                pSaveResult._UUID = _roomInfoDic[pChooseCard._roomNumber]._slot[n];
+                                                pSaveResult._clearTime = (int)diffSecond;
+                                                pSaveResult._isWin = winPlayerIndex == _roomInfoDic[pChooseCard._roomNumber]._slot[n] ? 0 : 1;
+
+                                                _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.SaveResult, pSaveResult));
+                                            }
+                                        }
                                     }
                                     else
                                     {
