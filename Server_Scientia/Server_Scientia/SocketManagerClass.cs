@@ -35,5 +35,35 @@ namespace Server_Scientia
                 }
             }
         }
+
+        public PacketClass AddToQueue(DefinedProtocol.eFromServer fromServerID, object str)
+        {
+            PacketClass packet = new PacketClass();
+            packet.CreatePacket(fromServerID, str);
+
+            return packet;
+        }
+
+        public void Send(byte[] buffer, long uuid)
+        {
+            SocketClass socket = SearchByUUID(uuid);
+            if (socket != null)
+                socket.SendBuffer(buffer);
+        }
+
+        public void Send(byte[] buffer, int index)
+        {
+            if (_socketList[index] != null)
+                _socketList[index].SendBuffer(buffer);
+        }
+
+        public SocketClass SearchByUUID(long uuid)
+        {
+            for (int n = 0; n < _socketList.Count; n++)
+                if (_socketList[n]._UUID == uuid)
+                    return _socketList[n];
+
+            return null;
+        }
     }
 }

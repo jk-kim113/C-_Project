@@ -20,6 +20,12 @@ namespace Server_Scientia
             _mySocket = socket;
         }
 
+        public void SendBuffer(byte[] buffer)
+        {
+            if (_mySocket != null)
+                _mySocket.Send(buffer);
+        }
+
         public bool ReceiveBuffer(out byte[] buffer, out int recvLen)
         {
             buffer = new byte[1032];

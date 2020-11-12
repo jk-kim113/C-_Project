@@ -17,8 +17,15 @@ namespace Server_Scientia
         SocketManagerClass _socketManager = new SocketManagerClass();
 
         Queue<PacketClass> _fromClientQueue = new Queue<PacketClass>();
+        Queue<PacketClass> _toClientQueue = new Queue<PacketClass>();
+
+        Queue<PacketClass> _fromServerQueue = new Queue<PacketClass>();
 
         Thread _tAccept;
+        Thread _tFromClient;
+        Thread _tToClient;
+        //Thread _tFromServer;
+        //Thread _tToServer;
 
         public MainServer()
         {
@@ -68,12 +75,94 @@ namespace Server_Scientia
             }
         }
 
+        void FromClientQueue()
+        {
+            try
+            {
+                while (true)
+                {
+                    if (_fromClientQueue.Count != 0)
+                    {
+                        PacketClass packet = _fromClientQueue.Dequeue();
+
+                        try
+                        {
+                            switch ((DefinedProtocol.eFromClient)packet._ProtocolID)
+                            {
+                                case DefinedProtocol.eFromClient.LogInTry:
+
+                                    DefinedStructure.P_LogInTry pLogInTry = new DefinedStructure.P_LogInTry();
+                                    pLogInTry = (DefinedStructure.P_LogInTry)packet.Convert(pLogInTry.GetType());
+
+                                    DefinedStructure.P_CheckLogIn pCheckLogIn;
+                                    pCheckLogIn._id = pLogInTry._id;
+                                    pCheckLogIn._pw = pLogInTry._pw;
+                                    pCheckLogIn._index = packet._CastIdendifier;
+
+                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.CheckLogIn, pCheckLogIn));
+
+                                    Console.WriteLine("ID가 {0}인 유저가 접속을 시도 하고 있습니다.", pLogInTry._id);
+
+                                    break;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                            Console.WriteLine(ex.StackTrace);
+                        }
+                    }
+
+                    Thread.Sleep(10);
+                }
+            }
+            catch (ThreadInterruptedException e)
+            {
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
+            }
+        }
+
+        void ToClientQueue()
+        {
+            try
+            {
+                while (true)
+                {
+                    if (_toClientQueue.Count != 0)
+                    {
+                        PacketClass packet = _toClientQueue.Dequeue();
+
+                        if (packet._CastIdendifier >= 0)
+                            _socketManager.Send(packet._Data, packet._CastIdendifier);
+                        else
+                            _socketManager.Send(packet._Data, packet._UUID);
+                    }
+
+                    Thread.Sleep(10);
+                }
+            }
+            catch (ThreadInterruptedException e)
+            {
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
+            }
+        }
+
         public void MainLoop()
         {
             _tAccept = new Thread(new ThreadStart(Accept));
-            
+            _tFromClient = new Thread(new ThreadStart(FromClientQueue));
+            _tToClient = new Thread(new ThreadStart(ToClientQueue));
+
             if (!_tAccept.IsAlive)
                 _tAccept.Start();
+
+            if (!_tFromClient.IsAlive)
+                _tFromClient.Start();
+
+            if (!_tToClient.IsAlive)
+                _tToClient.Start();
         }
 
         public void ExitProgram()
@@ -83,6 +172,26 @@ namespace Server_Scientia
                 _tAccept.Interrupt();
                 _tAccept.Join();
             }
+            if (_tFromClient.IsAlive)
+            {
+                _tFromClient.Interrupt();
+                _tFromClient.Join();
+            }
+            if (_tToClient.IsAlive)
+            {
+                _tToClient.Interrupt();
+                _tToClient.Join();
+            }
+            //if (_tFromServer.IsAlive)
+            //{
+            //    _tFromServer.Interrupt();
+            //    _tFromServer.Join();
+            //}
+            //if (_tToServer.IsAlive)
+            //{
+            //    _tToServer.Interrupt();
+            //    _tToServer.Join();
+            //}
         }
     }
 }

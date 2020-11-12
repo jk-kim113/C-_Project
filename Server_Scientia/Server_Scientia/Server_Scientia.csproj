@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConvertPacket.cs" />
+    <Compile Include="DefinedProtocol.cs" />
     <Compile Include="DefinedStructure.cs" />
     <Compile Include="MainServer.cs" />
     <Compile Include="PacketClass.cs" />
