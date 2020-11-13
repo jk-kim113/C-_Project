@@ -4,27 +4,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Server_Scientia
+namespace DB_Scientia
 {
     class Program
     {
         static void Main(string[] args)
         {
-            MainServer server = new MainServer();
+            MainDB db = new MainDB();
 
-            server.MainLoop();
+            db.MainLoop();
 
             string exitOrder = string.Empty;
             do
             {
                 exitOrder = Console.ReadLine();
 
-                if (exitOrder.Equals("Connect"))
-                    server.ConnectDB();
             }
             while (!exitOrder.Equals("Exit"));
 
-            server.ExitProgram();
+            db.ExitProgram();
         }
     }
 }

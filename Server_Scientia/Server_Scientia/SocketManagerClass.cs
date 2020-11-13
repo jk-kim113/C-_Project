@@ -36,6 +36,22 @@ namespace Server_Scientia
             }
         }
 
+        public PacketClass AddToQueue(DefinedProtocol.eToClient toClientID, object str, long uuid)
+        {
+            PacketClass packet = new PacketClass();
+            packet.CreatePacket(toClientID, str, uuid);
+
+            return packet;
+        }
+
+        public PacketClass AddToQueue(DefinedProtocol.eToClient toClientID, object str, int castIdentifier)
+        {
+            PacketClass packet = new PacketClass();
+            packet.CreatePacket(toClientID, str, castIdentifier);
+
+            return packet;
+        }
+
         public PacketClass AddToQueue(DefinedProtocol.eFromServer fromServerID, object str)
         {
             PacketClass packet = new PacketClass();

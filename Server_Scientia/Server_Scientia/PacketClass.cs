@@ -33,6 +33,20 @@ namespace Server_Scientia
             _uniqueUserIndex = uuid;
         }
 
+        public PacketClass(int protocolID, byte[] data, int dataSize)
+        {
+            _protocolID = protocolID;
+            _data = data;
+            _dataSize = dataSize;
+        }
+
+        public void CreatePacket(DefinedProtocol.eToClient toClientID, object str, long uuid)
+        {
+            _uniqueUserIndex = uuid;
+
+            MakePacket((int)toClientID, str);
+        }
+
         public void CreatePacket(DefinedProtocol.eToClient toClientID, object str, int castIdentifier)
         {
             _castIdentifier = castIdentifier;
@@ -47,12 +61,14 @@ namespace Server_Scientia
 
         void MakePacket(int packetID, object str)
         {
-            byte[] data = ConvertPacket.StructureToByteArray(str);
             DefinedStructure.PacketInfo packet;
             packet._id = packetID;
             packet._data = new byte[1024];
-            Array.Copy(data, packet._data, data.Length);
-            packet._totalSize = packet._data.Length;
+
+            byte[] temp = ConvertPacket.StructureToByteArray(str);
+            for (int n = 0; n < temp.Length; n++)
+                packet._data[n] = temp[n];
+            packet._totalSize = temp.Length;
 
             _data = ConvertPacket.StructureToByteArray(packet);
             _dataSize = _data.Length;

@@ -4,31 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Server_Scientia
+namespace DB_Scientia
 {
     class DefinedProtocol
     {
-        public enum eFromClient
-        {
-            LogInTry,
-            OverlapCheck_ID,
-            EnrollTry,
-            GetMyCharacterInfo,
-
-            max
-        }
-
-        public enum eToClient
-        {
-            LogInResult,
-            ResultOverlap_ID,
-            EnrollResult,
-            CharacterInfo,
-            EndCharacterInfo,
-
-            max
-        }
-
         public enum eFromServer
         {
             CheckLogIn,

@@ -14,18 +14,24 @@ namespace Server_Scientia
         const short _port = 80;
         Socket _waitServer;
 
+        const string _dbIP = "127.0.0.1";
+        const int _dbPort = 81;
+        Socket _dbServer;
+
         SocketManagerClass _socketManager = new SocketManagerClass();
 
         Queue<PacketClass> _fromClientQueue = new Queue<PacketClass>();
         Queue<PacketClass> _toClientQueue = new Queue<PacketClass>();
 
         Queue<PacketClass> _fromServerQueue = new Queue<PacketClass>();
+        Queue<PacketClass> _toServerQueue = new Queue<PacketClass>();
+
 
         Thread _tAccept;
         Thread _tFromClient;
         Thread _tToClient;
-        //Thread _tFromServer;
-        //Thread _tToServer;
+        Thread _tFromServer;
+        Thread _tToServer;
 
         public MainServer()
         {
@@ -50,6 +56,39 @@ namespace Server_Scientia
             }
         }
 
+        bool Connect(string ipAddress, int port)
+        {
+            try
+            {
+                _dbServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                _dbServer.Connect(ipAddress, port);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
+            }
+
+            return false;
+        }
+
+        public void ConnectDB()
+        {
+            if (Connect(_dbIP, _dbPort))
+            {
+                _tFromServer = new Thread(new ThreadStart(FromServerQueue));
+                _tToServer = new Thread(new ThreadStart(ToServerQueue));
+
+                if (!_tFromServer.IsAlive)
+                    _tFromServer.Start();
+
+                if (!_tToServer.IsAlive)
+                    _tToServer.Start();
+            }
+        }
+
         void Accept()
         {
             try
@@ -64,6 +103,20 @@ namespace Server_Scientia
                     }
 
                     _socketManager.AddFromQueue(_fromClientQueue);
+
+                    if (_dbServer != null && _dbServer.Poll(0, SelectMode.SelectRead))
+                    {
+                        byte[] buffer = new byte[1032];
+                        int recvLen = _dbServer.Receive(buffer);
+                        if (recvLen > 0)
+                        {
+                            DefinedStructure.PacketInfo pToClient = new DefinedStructure.PacketInfo();
+                            pToClient = (DefinedStructure.PacketInfo)ConvertPacket.ByteArrayToStructure(buffer, pToClient.GetType(), recvLen);
+
+                            PacketClass packet = new PacketClass(pToClient._id, pToClient._data, pToClient._totalSize);
+                            _toServerQueue.Enqueue(packet);
+                        }
+                    }
 
                     Thread.Sleep(10);
                 }
@@ -91,10 +144,10 @@ namespace Server_Scientia
                             {
                                 case DefinedProtocol.eFromClient.LogInTry:
 
-                                    DefinedStructure.P_LogInTry pLogInTry = new DefinedStructure.P_LogInTry();
-                                    pLogInTry = (DefinedStructure.P_LogInTry)packet.Convert(pLogInTry.GetType());
+                                    DefinedStructure.P_Send_ID_Pw pLogInTry = new DefinedStructure.P_Send_ID_Pw();
+                                    pLogInTry = (DefinedStructure.P_Send_ID_Pw)packet.Convert(pLogInTry.GetType());
 
-                                    DefinedStructure.P_CheckLogIn pCheckLogIn;
+                                    DefinedStructure.P_Check_ID_Pw pCheckLogIn;
                                     pCheckLogIn._id = pLogInTry._id;
                                     pCheckLogIn._pw = pLogInTry._pw;
                                     pCheckLogIn._index = packet._CastIdendifier;
@@ -102,6 +155,42 @@ namespace Server_Scientia
                                     _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.CheckLogIn, pCheckLogIn));
 
                                     Console.WriteLine("ID가 {0}인 유저가 접속을 시도 하고 있습니다.", pLogInTry._id);
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.OverlapCheck_ID:
+
+                                    DefinedStructure.P_OverlapCheck pOverlapCheck_ID = new DefinedStructure.P_OverlapCheck();
+                                    pOverlapCheck_ID = (DefinedStructure.P_OverlapCheck)packet.Convert(pOverlapCheck_ID.GetType());
+
+                                    DefinedStructure.P_CheckOverlap pCheckOverlap_ID;
+                                    pCheckOverlap_ID._target = pOverlapCheck_ID._target;
+                                    pCheckOverlap_ID._index = packet._CastIdendifier;
+
+                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.OverlapCheck_ID, pCheckOverlap_ID));
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.EnrollTry:
+
+                                    DefinedStructure.P_Send_ID_Pw pEnrollTry = new DefinedStructure.P_Send_ID_Pw();
+                                    pEnrollTry = (DefinedStructure.P_Send_ID_Pw)packet.Convert(pEnrollTry.GetType());
+
+                                    DefinedStructure.P_Check_ID_Pw pCheckEnroll;
+                                    pCheckEnroll._id = pEnrollTry._id;
+                                    pCheckEnroll._pw = pEnrollTry._pw;
+                                    pCheckEnroll._index = packet._CastIdendifier;
+
+                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.CheckEnroll, pCheckEnroll));
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.GetMyCharacterInfo:
+
+                                    DefinedStructure.P_CheckRequest pGetMyCharacInfo;
+                                    pGetMyCharacInfo._UUID = packet._UUID;
+
+                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.CheckCharacterInfo, pGetMyCharacInfo));
 
                                     break;
                             }
@@ -137,6 +226,112 @@ namespace Server_Scientia
                             _socketManager.Send(packet._Data, packet._CastIdendifier);
                         else
                             _socketManager.Send(packet._Data, packet._UUID);
+                    }
+
+                    Thread.Sleep(10);
+                }
+            }
+            catch (ThreadInterruptedException e)
+            {
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
+            }
+        }
+
+        void FromServerQueue()
+        {
+            try
+            {
+                while (true)
+                {
+                    if (_fromServerQueue.Count != 0)
+                        _dbServer.Send(_fromServerQueue.Dequeue()._Data);
+
+                    Thread.Sleep(10);
+                }
+            }
+            catch (ThreadInterruptedException e)
+            {
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
+            }
+        }
+
+        void ToServerQueue()
+        {
+            try
+            {
+                while (true)
+                {
+                    if (_toServerQueue.Count != 0)
+                    {
+                        PacketClass tData = _toServerQueue.Dequeue();
+
+                        switch ((DefinedProtocol.eToServer)tData._ProtocolID)
+                        {
+                            case DefinedProtocol.eToServer.LogInResult:
+
+                                DefinedStructure.P_LogInResult pLogInResult = new DefinedStructure.P_LogInResult();
+                                pLogInResult = (DefinedStructure.P_LogInResult)tData.Convert(pLogInResult.GetType());
+
+                                DefinedStructure.P_ResultLogIn pResultLogIn;
+                                pResultLogIn._isSuccess = pLogInResult._isSuccess;
+                                pResultLogIn._UUID = pLogInResult._UUID;
+
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.LogInResult, pResultLogIn, pLogInResult._index));
+
+                                break;
+
+                            case DefinedProtocol.eToServer.OverlapResult_ID:
+
+                                DefinedStructure.P_CheckResult pOverlapResult = new DefinedStructure.P_CheckResult();
+                                pOverlapResult = (DefinedStructure.P_CheckResult)tData.Convert(pOverlapResult.GetType());
+
+                                DefinedStructure.P_ResultCheck pResultOverlap;
+                                pResultOverlap._result = pOverlapResult._result;
+
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ResultOverlap_ID, pResultOverlap, pOverlapResult._index));
+
+                                break;
+
+                            case DefinedProtocol.eToServer.EnrollResult:
+
+                                DefinedStructure.P_CheckResult pEnrollResult = new DefinedStructure.P_CheckResult();
+                                pEnrollResult = (DefinedStructure.P_CheckResult)tData.Convert(pEnrollResult.GetType());
+
+                                DefinedStructure.P_ResultCheck pResultEnroll;
+                                pResultEnroll._result = pEnrollResult._result;
+
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.EnrollResult, pResultEnroll, pEnrollResult._index));
+
+                                break;
+
+                            case DefinedProtocol.eToServer.ShowCharacterInfo:
+
+                                DefinedStructure.P_ShowCharacterInfo pShowCharacInfo = new DefinedStructure.P_ShowCharacterInfo();
+                                pShowCharacInfo = (DefinedStructure.P_ShowCharacterInfo)tData.Convert(pShowCharacInfo.GetType());
+
+                                DefinedStructure.P_CharacterInfo pCharacInfo;
+                                pCharacInfo._nickName = pShowCharacInfo._nickName;
+                                pCharacInfo._chracIndex = pShowCharacInfo._chracIndex;
+                                pCharacInfo._accountLevel = pShowCharacInfo._accountLevel;
+                                pCharacInfo._slotIndex = pShowCharacInfo._slotIndex;
+
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.CharacterInfo, pCharacInfo, pShowCharacInfo._UUID));
+
+                                break;
+
+                            case DefinedProtocol.eToServer.CompleteCharacterInfo:
+
+                                DefinedStructure.P_CheckRequest pCompleteCharacterInfo = new DefinedStructure.P_CheckRequest();
+                                pCompleteCharacterInfo = (DefinedStructure.P_CheckRequest)tData.Convert(pCompleteCharacterInfo.GetType());
+
+                                DefinedStructure.P_Request pEndCharacterInfo;
+
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.EndCharacterInfo, pEndCharacterInfo, pCompleteCharacterInfo._UUID));
+
+                                break;
+                        }
                     }
 
                     Thread.Sleep(10);

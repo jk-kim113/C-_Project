@@ -5,12 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 
-namespace Server_Scientia
+namespace DB_Scientia
 {
     class DefinedStructure
     {
         [StructLayout(LayoutKind.Sequential)]
-        public struct PacketInfo
+        public struct PacketInfo                                        // 전체 사이즈 1032byte
         {
             [MarshalAs(UnmanagedType.I4)]
             public int _id;
@@ -20,62 +20,6 @@ namespace Server_Scientia
             public byte[] _data;
         }
 
-        #region FromClient
-        [StructLayout(LayoutKind.Sequential)]
-        public struct P_Send_ID_Pw
-        {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
-            public string _id;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
-            public string _pw;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct P_OverlapCheck
-        {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
-            public string _target;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct P_Request
-        {
-            
-        }
-        #endregion
-
-        #region ToClient
-        [StructLayout(LayoutKind.Sequential)]
-        public struct P_ResultLogIn
-        {
-            [MarshalAs(UnmanagedType.I4)]
-            public int _isSuccess;
-            [MarshalAs(UnmanagedType.I8)]
-            public long _UUID;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct P_ResultCheck
-        {
-            [MarshalAs(UnmanagedType.I4)]
-            public int _result;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct P_CharacterInfo
-        {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
-            public string _nickName;
-            [MarshalAs(UnmanagedType.I4)]
-            public int _chracIndex;
-            [MarshalAs(UnmanagedType.I4)]
-            public int _accountLevel;
-            [MarshalAs(UnmanagedType.I4)]
-            public int _slotIndex;
-        }
-        #endregion
-
-        #region FromServer
         [StructLayout(LayoutKind.Sequential)]
         public struct P_Check_ID_Pw
         {
@@ -97,15 +41,6 @@ namespace Server_Scientia
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct P_CheckRequest
-        {
-            [MarshalAs(UnmanagedType.I8)]
-            public long _UUID;
-        }
-        #endregion
-
-        #region ToServer
-        [StructLayout(LayoutKind.Sequential)]
         public struct P_LogInResult
         {
             [MarshalAs(UnmanagedType.I4)]
@@ -126,6 +61,13 @@ namespace Server_Scientia
         }
 
         [StructLayout(LayoutKind.Sequential)]
+        public struct P_CheckRequest
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         public struct P_ShowCharacterInfo
         {
             [MarshalAs(UnmanagedType.I8)]
@@ -139,6 +81,5 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _slotIndex;
         }
-        #endregion
     }
 }
