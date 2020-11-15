@@ -12,8 +12,12 @@ namespace Server_Scientia
         {
             LogInTry,
             OverlapCheck_ID,
+            OverlapCheck_NickName,
             EnrollTry,
             GetMyCharacterInfo,
+            CreateCharacter,
+
+            ConnectionTerminate,
 
             max
         }
@@ -22,9 +26,11 @@ namespace Server_Scientia
         {
             LogInResult,
             ResultOverlap_ID,
+            ResultOverlap_NickName,
             EnrollResult,
             CharacterInfo,
             EndCharacterInfo,
+            EndCreateCharacter,
 
             max
         }
@@ -33,8 +39,10 @@ namespace Server_Scientia
         {
             CheckLogIn,
             OverlapCheck_ID,
+            OverlapCheck_NickName,
             CheckEnroll,
             CheckCharacterInfo,
+            CreateCharacter,
 
             max
         }
@@ -43,9 +51,11 @@ namespace Server_Scientia
         {
             LogInResult,
             OverlapResult_ID,
+            OverlapResult_NickName,
             EnrollResult,
             ShowCharacterInfo,
             CompleteCharacterInfo,
+            CreateCharacterResult,
 
             max
         }

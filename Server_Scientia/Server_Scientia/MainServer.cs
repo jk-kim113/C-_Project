@@ -26,7 +26,6 @@ namespace Server_Scientia
         Queue<PacketClass> _fromServerQueue = new Queue<PacketClass>();
         Queue<PacketClass> _toServerQueue = new Queue<PacketClass>();
 
-
         Thread _tAccept;
         Thread _tFromClient;
         Thread _tToClient;
@@ -142,6 +141,7 @@ namespace Server_Scientia
                         {
                             switch ((DefinedProtocol.eFromClient)packet._ProtocolID)
                             {
+                                #region LogIn / CreateCharacter
                                 case DefinedProtocol.eFromClient.LogInTry:
 
                                     DefinedStructure.P_Send_ID_Pw pLogInTry = new DefinedStructure.P_Send_ID_Pw();
@@ -171,6 +171,19 @@ namespace Server_Scientia
 
                                     break;
 
+                                case DefinedProtocol.eFromClient.OverlapCheck_NickName:
+
+                                    DefinedStructure.P_OverlapCheck pOverlapCheck_NickName = new DefinedStructure.P_OverlapCheck();
+                                    pOverlapCheck_NickName = (DefinedStructure.P_OverlapCheck)packet.Convert(pOverlapCheck_NickName.GetType());
+
+                                    DefinedStructure.P_CheckOverlap pCheckOverlap_NickName;
+                                    pCheckOverlap_NickName._target = pOverlapCheck_NickName._target;
+                                    pCheckOverlap_NickName._index = packet._CastIdendifier;
+
+                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.OverlapCheck_NickName, pCheckOverlap_NickName));
+
+                                    break;
+
                                 case DefinedProtocol.eFromClient.EnrollTry:
 
                                     DefinedStructure.P_Send_ID_Pw pEnrollTry = new DefinedStructure.P_Send_ID_Pw();
@@ -191,6 +204,30 @@ namespace Server_Scientia
                                     pGetMyCharacInfo._UUID = packet._UUID;
 
                                     _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.CheckCharacterInfo, pGetMyCharacInfo));
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.CreateCharacter:
+
+                                    DefinedStructure.P_CreateCharacter pCreateCharacter = new DefinedStructure.P_CreateCharacter();
+                                    pCreateCharacter = (DefinedStructure.P_CreateCharacter)packet.Convert(pCreateCharacter.GetType());
+
+                                    Console.WriteLine(packet._UUID);
+
+                                    DefinedStructure.P_CreateCharacterInfo pCreateCharacterInfo;
+                                    pCreateCharacterInfo._UUID = packet._UUID;
+                                    pCreateCharacterInfo._nickName = pCreateCharacter._nickName;
+                                    pCreateCharacterInfo._characterIndex = pCreateCharacter._characterIndex;
+                                    pCreateCharacterInfo._slot = pCreateCharacter._slot;
+
+                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.CreateCharacter, pCreateCharacterInfo));
+
+                                    break;
+                                #endregion
+
+                                case DefinedProtocol.eFromClient.ConnectionTerminate:
+
+                                    _socketManager.CloseSocket(packet._CastIdendifier);
 
                                     break;
                             }
@@ -278,19 +315,33 @@ namespace Server_Scientia
                                 pResultLogIn._isSuccess = pLogInResult._isSuccess;
                                 pResultLogIn._UUID = pLogInResult._UUID;
 
+                                _socketManager.ConnectSocket(pLogInResult._index, pLogInResult._UUID);
+
                                 _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.LogInResult, pResultLogIn, pLogInResult._index));
 
                                 break;
 
                             case DefinedProtocol.eToServer.OverlapResult_ID:
 
-                                DefinedStructure.P_CheckResult pOverlapResult = new DefinedStructure.P_CheckResult();
-                                pOverlapResult = (DefinedStructure.P_CheckResult)tData.Convert(pOverlapResult.GetType());
+                                DefinedStructure.P_CheckResult pOverlapResult_ID = new DefinedStructure.P_CheckResult();
+                                pOverlapResult_ID = (DefinedStructure.P_CheckResult)tData.Convert(pOverlapResult_ID.GetType());
 
-                                DefinedStructure.P_ResultCheck pResultOverlap;
-                                pResultOverlap._result = pOverlapResult._result;
+                                DefinedStructure.P_ResultCheck pResultOverlap_ID;
+                                pResultOverlap_ID._result = pOverlapResult_ID._result;
 
-                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ResultOverlap_ID, pResultOverlap, pOverlapResult._index));
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ResultOverlap_ID, pResultOverlap_ID, pOverlapResult_ID._index));
+
+                                break;
+
+                            case DefinedProtocol.eToServer.OverlapResult_NickName:
+
+                                DefinedStructure.P_CheckResult pOverlapResult_NickName = new DefinedStructure.P_CheckResult();
+                                pOverlapResult_NickName = (DefinedStructure.P_CheckResult)tData.Convert(pOverlapResult_NickName.GetType());
+
+                                DefinedStructure.P_ResultCheck pResultOverlap_NickName;
+                                pResultOverlap_NickName._result = pOverlapResult_NickName._result;
+
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ResultOverlap_NickName, pResultOverlap_NickName, pOverlapResult_NickName._index));
 
                                 break;
 
@@ -329,6 +380,18 @@ namespace Server_Scientia
                                 DefinedStructure.P_Request pEndCharacterInfo;
 
                                 _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.EndCharacterInfo, pEndCharacterInfo, pCompleteCharacterInfo._UUID));
+
+                                break;
+
+                            case DefinedProtocol.eToServer.CreateCharacterResult:
+
+                                DefinedStructure.P_Result pResult = new DefinedStructure.P_Result();
+                                pResult = (DefinedStructure.P_Result)tData.Convert(pResult.GetType());
+
+                                DefinedStructure.P_ResultCheck pResultCheck;
+                                pResultCheck._result = pResult._result;
+
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.EndCreateCharacter, pResultCheck, pResult._UUID));
 
                                 break;
                         }

@@ -13,7 +13,21 @@ namespace Server_Scientia
 
         public void AddSocket(SocketClass socket)
         {
+            for(int n = 0; n < _socketList.Count; n++)
+            {
+                if (_socketList[n] == null)
+                {
+                    _socketList[n] = socket;
+                    return;
+                }   
+            }
+
             _socketList.Add(socket);
+        }
+
+        public void ConnectSocket(int index, long uuid)
+        {
+            _socketList[index].ConnectSocket(uuid);
         }
 
         public void AddFromQueue(Queue<PacketClass> fromClient)
@@ -80,6 +94,15 @@ namespace Server_Scientia
                     return _socketList[n];
 
             return null;
+        }
+
+        public void CloseSocket(int index)
+        {   
+            if (_socketList[index] != null)
+            {
+                _socketList[index].Close();
+                _socketList[index] = null;
+            }   
         }
     }
 }

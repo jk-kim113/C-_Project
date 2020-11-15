@@ -140,6 +140,45 @@ namespace DB_Scientia
             }
         }
 
+        public bool SearchNickName(string nickname)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT * FROM userinfo WHERE ID = '{0}';", nickname);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        if (table["ID"].ToString().Equals(nickname))
+                        {
+                            table.Close();
+                            return true;
+                        }
+                    }
+
+                    table.Close();
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                    return false;
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
         public void SearchCharacterInfo(long uuid, List<CharacterInfo> characInfoList)
         {
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
@@ -186,6 +225,43 @@ namespace DB_Scientia
                 connection.Open();
 
                 string insertQuery = string.Format("INSERT INTO userinfo(ID, PW) VALUES ('{0}','{1}');", id, pw);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(insertQuery, connection);
+
+                    if (command.ExecuteNonQuery() == 1)
+                    {
+                        Console.WriteLine("Insert Success");
+                        return true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Insert Fail");
+                        return false;
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                    return false;
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public bool InsertCharacterInfo(long uuid, string nickName, int characIndex, int slot)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string insertQuery = string.Format("INSERT INTO characterinfo(NickName, UUID, CharacterIndex, SlotIndex) VALUES ('{0}',{1},{2},{3});", nickName, uuid, characIndex, slot);
 
                 try
                 {

@@ -81,5 +81,27 @@ namespace DB_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _slotIndex;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_CreateCharacterInfo
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _characterIndex;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _slot;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_Result
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _result;
+        }
     }
 }

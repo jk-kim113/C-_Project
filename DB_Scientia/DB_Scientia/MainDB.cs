@@ -138,6 +138,15 @@ namespace DB_Scientia
 
                                 break;
 
+                            case DefinedProtocol.eFromServer.OverlapCheck_NickName:
+
+                                DefinedStructure.P_CheckOverlap pCheckOverlap_NickName = new DefinedStructure.P_CheckOverlap();
+                                pCheckOverlap_NickName = (DefinedStructure.P_CheckOverlap)ConvertPacket.ByteArrayToStructure(packet._data, pCheckOverlap_NickName.GetType(), packet._totalSize);
+
+                                OverlapCheck_NickName(pCheckOverlap_NickName._target, pCheckOverlap_NickName._index);
+
+                                break;
+
                             case DefinedProtocol.eFromServer.CheckEnroll:
 
                                 DefinedStructure.P_Check_ID_Pw pCheckEnroll = new DefinedStructure.P_Check_ID_Pw();
@@ -153,6 +162,17 @@ namespace DB_Scientia
                                 pCheckCharacInfo = (DefinedStructure.P_CheckRequest)ConvertPacket.ByteArrayToStructure(packet._data, pCheckCharacInfo.GetType(), packet._totalSize);
 
                                 CheckCharacInfo(pCheckCharacInfo._UUID);
+
+                                break;
+
+                            case DefinedProtocol.eFromServer.CreateCharacter:
+
+                                DefinedStructure.P_CreateCharacterInfo pCreateCharac = new DefinedStructure.P_CreateCharacterInfo();
+                                pCreateCharac = (DefinedStructure.P_CreateCharacterInfo)ConvertPacket.ByteArrayToStructure(packet._data, pCreateCharac.GetType(), packet._totalSize);
+
+                                Console.WriteLine(pCreateCharac._UUID);
+
+                                CreateCharacter(pCreateCharac._UUID, pCreateCharac._nickName, pCreateCharac._characterIndex, pCreateCharac._slot);
 
                                 break;
                         }
@@ -223,6 +243,17 @@ namespace DB_Scientia
             Console.WriteLine("{0} <- 해당 아이디는 중복이 {1}니다.", id, pOverlapResult._result == 0 ? "맞습" : "아닙");
         }
 
+        void OverlapCheck_NickName(string nickname, int index)
+        {
+            DefinedStructure.P_CheckResult pOverlapResult;
+            pOverlapResult._index = index;
+            pOverlapResult._result = _dbQuery.SearchNickName(nickname) ? 0 : 1;
+
+            ToPacket(DefinedProtocol.eToServer.OverlapResult_NickName, pOverlapResult);
+
+            Console.WriteLine("{0} <- 해당 닉네임은 중복이 {1}니다.", nickname, pOverlapResult._result == 0 ? "맞습" : "아닙");
+        }
+
         void Enroll(string id, string pw, int index)
         {
             DefinedStructure.P_CheckResult pEnrollResult;
@@ -263,6 +294,25 @@ namespace DB_Scientia
             pCompleteCharacterInfo._UUID = uuid;
 
             ToPacket(DefinedProtocol.eToServer.CompleteCharacterInfo, pCompleteCharacterInfo);
+        }
+
+        void CreateCharacter(long uuid, string nickName, int characIndex, int slot)
+        {
+            DefinedStructure.P_Result pResult;
+            pResult._UUID = uuid;
+
+            if(_dbQuery.InsertCharacterInfo(uuid, nickName, characIndex, slot))
+            {
+                pResult._result = 0;
+                Console.WriteLine("캐릭터 등록이 완료되었습니다.");
+            }
+            else
+            {
+                pResult._result = 1;
+                Console.WriteLine("캐릭터 등록 과정에서 문제가 발견되었습니다.");
+            }
+
+            ToPacket(DefinedProtocol.eToServer.CreateCharacterResult, pResult);
         }
 
         void ToPacket(DefinedProtocol.eToServer toServer, object str)

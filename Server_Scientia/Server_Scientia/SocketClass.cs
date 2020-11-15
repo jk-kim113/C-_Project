@@ -20,6 +20,11 @@ namespace Server_Scientia
             _mySocket = socket;
         }
 
+        public void ConnectSocket(long uniqueIdx)
+        {
+            _uniqueIdx = uniqueIdx;
+        }
+
         public void SendBuffer(byte[] buffer)
         {
             if (_mySocket != null)
@@ -49,6 +54,13 @@ namespace Server_Scientia
             }
 
             return false;
+        }
+
+        public void Close()
+        {
+            _mySocket.Shutdown(SocketShutdown.Both);
+            _mySocket.Close();
+            _mySocket = null;
         }
     }
 }

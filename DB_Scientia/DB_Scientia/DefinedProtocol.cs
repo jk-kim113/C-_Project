@@ -12,8 +12,10 @@ namespace DB_Scientia
         {
             CheckLogIn,
             OverlapCheck_ID,
+            OverlapCheck_NickName,
             CheckEnroll,
             CheckCharacterInfo,
+            CreateCharacter,
 
             max
         }
@@ -22,9 +24,11 @@ namespace DB_Scientia
         {
             LogInResult,
             OverlapResult_ID,
+            OverlapResult_NickName,
             EnrollResult,
             ShowCharacterInfo,
             CompleteCharacterInfo,
+            CreateCharacterResult,
 
             max
         }
