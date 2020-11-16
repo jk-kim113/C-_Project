@@ -218,6 +218,39 @@ namespace DB_Scientia
             }
         }
 
+        public void SearchCardReleaseInfo(string nickName, List<int> cardRelease)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT CardIndex FROM cardreleaseinfo WHERE NickName = '{0}';", nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        cardRelease.Add(int.Parse(table["CardIndex"].ToString()));
+                    }
+
+                    table.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
         public bool InsertUserInfo(string id, string pw)
         {
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
@@ -284,6 +317,40 @@ namespace DB_Scientia
                     Console.WriteLine("연결 실패!!");
                     Console.WriteLine(ex.ToString());
                     return false;
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public void InsertCardReleaseInfo(string nickName, int cardIndex)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string insertQuery = string.Format("INSERT INTO cardreleaseinfo(NickName, CardIndex) VALUES ('{0}',{1});", nickName, cardIndex);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(insertQuery, connection);
+
+                    if (command.ExecuteNonQuery() == 1)
+                    {
+                        Console.WriteLine("Insert Success");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Insert Fail");
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
                 }
                 finally
                 {

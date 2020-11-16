@@ -120,6 +120,7 @@ namespace DB_Scientia
 
                         switch ((DefinedProtocol.eFromServer)packet._id)
                         {
+                            #region LogIn / Character
                             case DefinedProtocol.eFromServer.CheckLogIn:
 
                                 DefinedStructure.P_Check_ID_Pw pCheckLogIn = new DefinedStructure.P_Check_ID_Pw();
@@ -170,9 +171,17 @@ namespace DB_Scientia
                                 DefinedStructure.P_CreateCharacterInfo pCreateCharac = new DefinedStructure.P_CreateCharacterInfo();
                                 pCreateCharac = (DefinedStructure.P_CreateCharacterInfo)ConvertPacket.ByteArrayToStructure(packet._data, pCreateCharac.GetType(), packet._totalSize);
 
-                                Console.WriteLine(pCreateCharac._UUID);
+                                CreateCharacter(pCreateCharac._UUID, pCreateCharac._nickName, pCreateCharac._characterIndex, pCreateCharac._slot, pCreateCharac._startCardList);
 
-                                CreateCharacter(pCreateCharac._UUID, pCreateCharac._nickName, pCreateCharac._characterIndex, pCreateCharac._slot);
+                                break;
+                            #endregion
+
+                            case DefinedProtocol.eFromServer.UserCardReleaseInfo:
+
+                                DefinedStructure.P_UserCardReleaseInfo pUserCardReleaseInfo = new DefinedStructure.P_UserCardReleaseInfo();
+                                pUserCardReleaseInfo = (DefinedStructure.P_UserCardReleaseInfo)ConvertPacket.ByteArrayToStructure(packet._data, pUserCardReleaseInfo.GetType(), packet._totalSize);
+
+                                CardReleaseInfo(pUserCardReleaseInfo._UUID, pUserCardReleaseInfo._nickName);
 
                                 break;
                         }
@@ -296,7 +305,7 @@ namespace DB_Scientia
             ToPacket(DefinedProtocol.eToServer.CompleteCharacterInfo, pCompleteCharacterInfo);
         }
 
-        void CreateCharacter(long uuid, string nickName, int characIndex, int slot)
+        void CreateCharacter(long uuid, string nickName, int characIndex, int slot, int[] startCardList)
         {
             DefinedStructure.P_Result pResult;
             pResult._UUID = uuid;
@@ -305,6 +314,14 @@ namespace DB_Scientia
             {
                 pResult._result = 0;
                 Console.WriteLine("캐릭터 등록이 완료되었습니다.");
+
+                for(int n = 0; n < startCardList.Length; n++)
+                {
+                    if (startCardList[n] == 0)
+                        break;
+
+                    _dbQuery.InsertCardReleaseInfo(nickName, startCardList[n]);
+                }
             }
             else
             {
@@ -313,6 +330,20 @@ namespace DB_Scientia
             }
 
             ToPacket(DefinedProtocol.eToServer.CreateCharacterResult, pResult);
+        }
+
+        void CardReleaseInfo(long uuid, string nickname)
+        {
+            List<int> cardRelease = new List<int>();
+            _dbQuery.SearchCardReleaseInfo(nickname, cardRelease);
+
+            DefinedStructure.P_CheckCardReleaseInfo pCheckCardReleaseInfo;
+            pCheckCardReleaseInfo._UUID = uuid;
+            pCheckCardReleaseInfo._cardIndexList = new int[48];
+            for (int n = 0; n < cardRelease.Count; n++)
+                pCheckCardReleaseInfo._cardIndexList[n] = cardRelease[n];
+
+            ToPacket(DefinedProtocol.eToServer.ShowCardReleaseInfo, pCheckCardReleaseInfo);
         }
 
         void ToPacket(DefinedProtocol.eToServer toServer, object str)

@@ -16,6 +16,7 @@ namespace DB_Scientia
             CheckEnroll,
             CheckCharacterInfo,
             CreateCharacter,
+            UserCardReleaseInfo,
 
             max
         }
@@ -29,6 +30,7 @@ namespace DB_Scientia
             ShowCharacterInfo,
             CompleteCharacterInfo,
             CreateCharacterResult,
+            ShowCardReleaseInfo,
 
             max
         }

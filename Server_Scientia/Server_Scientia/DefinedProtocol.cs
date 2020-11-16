@@ -16,6 +16,7 @@ namespace Server_Scientia
             EnrollTry,
             GetMyCharacterInfo,
             CreateCharacter,
+            MyCardReleaseInfo,
 
             ConnectionTerminate,
 
@@ -31,6 +32,7 @@ namespace Server_Scientia
             CharacterInfo,
             EndCharacterInfo,
             EndCreateCharacter,
+            ShowCardReleaseInfo,
 
             max
         }
@@ -43,6 +45,7 @@ namespace Server_Scientia
             CheckEnroll,
             CheckCharacterInfo,
             CreateCharacter,
+            UserCardReleaseInfo,
 
             max
         }
@@ -56,6 +59,7 @@ namespace Server_Scientia
             ShowCharacterInfo,
             CompleteCharacterInfo,
             CreateCharacterResult,
+            ShowCardReleaseInfo,
 
             max
         }

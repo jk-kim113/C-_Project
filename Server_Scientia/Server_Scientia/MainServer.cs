@@ -32,6 +32,8 @@ namespace Server_Scientia
         Thread _tFromServer;
         Thread _tToServer;
 
+        int[] _startCardArr = new int[] { 2, 3, 5, 13, 16, 17, 25, 27, 29, 37, 39, 41 };
+
         public MainServer()
         {
             CreateServer();
@@ -219,11 +221,27 @@ namespace Server_Scientia
                                     pCreateCharacterInfo._nickName = pCreateCharacter._nickName;
                                     pCreateCharacterInfo._characterIndex = pCreateCharacter._characterIndex;
                                     pCreateCharacterInfo._slot = pCreateCharacter._slot;
+                                    pCreateCharacterInfo._startCardList = new int[48];
+                                    for (int n = 0; n < _startCardArr.Length; n++)
+                                        pCreateCharacterInfo._startCardList[n] = _startCardArr[n];
 
                                     _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.CreateCharacter, pCreateCharacterInfo));
 
                                     break;
                                 #endregion
+
+                                case DefinedProtocol.eFromClient.MyCardReleaseInfo:
+
+                                    DefinedStructure.P_MyCardReleaseInfo pMyCardReleaseInfo = new DefinedStructure.P_MyCardReleaseInfo();
+                                    pMyCardReleaseInfo = (DefinedStructure.P_MyCardReleaseInfo)packet.Convert(pMyCardReleaseInfo.GetType());
+
+                                    DefinedStructure.P_UserCardReleaseInfo pUserCardReleaseInfo;
+                                    pUserCardReleaseInfo._UUID = packet._UUID;
+                                    pUserCardReleaseInfo._nickName = pMyCardReleaseInfo._nickName;
+
+                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.UserCardReleaseInfo, pUserCardReleaseInfo));
+
+                                    break;
 
                                 case DefinedProtocol.eFromClient.ConnectionTerminate:
 
@@ -306,6 +324,7 @@ namespace Server_Scientia
 
                         switch ((DefinedProtocol.eToServer)tData._ProtocolID)
                         {
+                            #region LogIn / Character
                             case DefinedProtocol.eToServer.LogInResult:
 
                                 DefinedStructure.P_LogInResult pLogInResult = new DefinedStructure.P_LogInResult();
@@ -316,7 +335,7 @@ namespace Server_Scientia
                                 pResultLogIn._UUID = pLogInResult._UUID;
 
                                 _socketManager.ConnectSocket(pLogInResult._index, pLogInResult._UUID);
-
+                                
                                 _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.LogInResult, pResultLogIn, pLogInResult._index));
 
                                 break;
@@ -394,6 +413,26 @@ namespace Server_Scientia
                                 _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.EndCreateCharacter, pResultCheck, pResult._UUID));
 
                                 break;
+                            #endregion
+
+                            case DefinedProtocol.eToServer.ShowCardReleaseInfo:
+
+                                DefinedStructure.P_CheckCardReleaseInfo pCheckCardReleaseInfo = new DefinedStructure.P_CheckCardReleaseInfo();
+                                pCheckCardReleaseInfo = (DefinedStructure.P_CheckCardReleaseInfo)tData.Convert(pCheckCardReleaseInfo.GetType());
+
+                                DefinedStructure.P_ShowCardReleaseInfo pShowCardReleaseInfo;
+                                pShowCardReleaseInfo._cardIndexList = new int[48];
+                                for(int n = 0; n < pCheckCardReleaseInfo._cardIndexList.Length; n++)
+                                {
+                                    if (pCheckCardReleaseInfo._cardIndexList[n] == 0)
+                                        break;
+
+                                    pShowCardReleaseInfo._cardIndexList[n] = pCheckCardReleaseInfo._cardIndexList[n];
+                                }
+
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowCardReleaseInfo, pShowCardReleaseInfo, pCheckCardReleaseInfo._UUID));
+
+                                break;
                         }
                     }
 
@@ -440,16 +479,16 @@ namespace Server_Scientia
                 _tToClient.Interrupt();
                 _tToClient.Join();
             }
-            //if (_tFromServer.IsAlive)
-            //{
-            //    _tFromServer.Interrupt();
-            //    _tFromServer.Join();
-            //}
-            //if (_tToServer.IsAlive)
-            //{
-            //    _tToServer.Interrupt();
-            //    _tToServer.Join();
-            //}
+            if (_tFromServer.IsAlive)
+            {
+                _tFromServer.Interrupt();
+                _tFromServer.Join();
+            }
+            if (_tToServer.IsAlive)
+            {
+                _tToServer.Interrupt();
+                _tToServer.Join();
+            }
         }
     }
 }

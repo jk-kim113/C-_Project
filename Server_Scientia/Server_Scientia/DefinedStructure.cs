@@ -53,6 +53,13 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _slot;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_MyCardReleaseInfo
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+        }
         #endregion
 
         #region ToClient
@@ -83,6 +90,13 @@ namespace Server_Scientia
             public int _accountLevel;
             [MarshalAs(UnmanagedType.I4)]
             public int _slotIndex;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowCardReleaseInfo
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 48)]
+            public int[] _cardIndexList;
         }
         #endregion
 
@@ -125,6 +139,17 @@ namespace Server_Scientia
             public int _characterIndex;
             [MarshalAs(UnmanagedType.I4)]
             public int _slot;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 48)]
+            public int[] _startCardList;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_UserCardReleaseInfo
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
         }
         #endregion
 
@@ -171,6 +196,15 @@ namespace Server_Scientia
             public long _UUID;
             [MarshalAs(UnmanagedType.I4)]
             public int _result;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_CheckCardReleaseInfo
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 48)]
+            public int[] _cardIndexList;
         }
         #endregion
     }
