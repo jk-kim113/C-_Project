@@ -120,8 +120,17 @@ namespace DB_Scientia
         {
             [MarshalAs(UnmanagedType.I8)]
             public long _UUID;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 48)]
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 48)]
             public int[] _cardIndexList;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ReleaseCard
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _cardIndex;
         }
     }
 }

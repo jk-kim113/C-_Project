@@ -184,6 +184,15 @@ namespace DB_Scientia
                                 CardReleaseInfo(pUserCardReleaseInfo._UUID, pUserCardReleaseInfo._nickName);
 
                                 break;
+
+                            case DefinedProtocol.eFromServer.AddReleaseCard:
+
+                                DefinedStructure.P_ReleaseCard pReleaseCard = new DefinedStructure.P_ReleaseCard();
+                                pReleaseCard = (DefinedStructure.P_ReleaseCard)ConvertPacket.ByteArrayToStructure(packet._data, pReleaseCard.GetType(), packet._totalSize);
+
+                                AddCardRelease(pReleaseCard._nickName, pReleaseCard._cardIndex);
+
+                                break;
                         }
                     }
 
@@ -334,16 +343,26 @@ namespace DB_Scientia
 
         void CardReleaseInfo(long uuid, string nickname)
         {
-            List<int> cardRelease = new List<int>();
-            _dbQuery.SearchCardReleaseInfo(nickname, cardRelease);
+            List<int> temp = new List<int>();
+            _dbQuery.SearchCardReleaseInfo(nickname, temp);
 
             DefinedStructure.P_CheckCardReleaseInfo pCheckCardReleaseInfo;
             pCheckCardReleaseInfo._UUID = uuid;
             pCheckCardReleaseInfo._cardIndexList = new int[48];
-            for (int n = 0; n < cardRelease.Count; n++)
-                pCheckCardReleaseInfo._cardIndexList[n] = cardRelease[n];
+            for (int n = 0; n < temp.Count; n++)
+                pCheckCardReleaseInfo._cardIndexList[n] = temp[n];
 
             ToPacket(DefinedProtocol.eToServer.ShowCardReleaseInfo, pCheckCardReleaseInfo);
+        }
+
+        void AddCardRelease(string nickName, int cardIndex)
+        {
+            _dbQuery.InsertCardReleaseInfo(nickName, cardIndex);
+
+            DefinedStructure.P_CheckRequest pCheckRequest;
+            pCheckRequest._UUID = _dbQuery.SearchUUIDwithNickName(nickName);
+
+            ToPacket(DefinedProtocol.eToServer.CompleteAddReleaseCard, pCheckRequest);
         }
 
         void ToPacket(DefinedProtocol.eToServer toServer, object str)

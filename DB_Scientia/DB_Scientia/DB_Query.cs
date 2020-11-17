@@ -101,6 +101,43 @@ namespace DB_Scientia
             }
         }
 
+        public long SearchUUIDwithNickName(string nickName)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT UUID FROM characterinfo WHERE NickName = '{0}';", nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        long uuid = long.Parse(table["UUID"].ToString());
+                        table.Close();
+                        return uuid;
+                    }
+
+                    table.Close();
+                    return 0;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                    return 0;
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
         public bool SearchID(string id)
         {
             using (MySqlConnection connection = new MySqlConnection(_connectionString))

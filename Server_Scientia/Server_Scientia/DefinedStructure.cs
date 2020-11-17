@@ -60,6 +60,15 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
             public string _nickName;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ReleaseCard
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _cardIndex;
+        }
         #endregion
 
         #region ToClient
@@ -95,7 +104,7 @@ namespace Server_Scientia
         [StructLayout(LayoutKind.Sequential)]
         public struct P_ShowCardReleaseInfo
         {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 48)]
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 48)]
             public int[] _cardIndexList;
         }
         #endregion
@@ -203,7 +212,7 @@ namespace Server_Scientia
         {
             [MarshalAs(UnmanagedType.I8)]
             public long _UUID;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 48)]
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 48)]
             public int[] _cardIndexList;
         }
         #endregion

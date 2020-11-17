@@ -17,6 +17,7 @@ namespace Server_Scientia
             GetMyCharacterInfo,
             CreateCharacter,
             MyCardReleaseInfo,
+            AddReleaseCard,
 
             ConnectionTerminate,
 
@@ -33,6 +34,7 @@ namespace Server_Scientia
             EndCharacterInfo,
             EndCreateCharacter,
             ShowCardReleaseInfo,
+            CompleteAddReleaseCard,
 
             max
         }
@@ -46,6 +48,7 @@ namespace Server_Scientia
             CheckCharacterInfo,
             CreateCharacter,
             UserCardReleaseInfo,
+            AddReleaseCard,
 
             max
         }
@@ -60,6 +63,7 @@ namespace Server_Scientia
             CompleteCharacterInfo,
             CreateCharacterResult,
             ShowCardReleaseInfo,
+            CompleteAddReleaseCard,
 
             max
         }

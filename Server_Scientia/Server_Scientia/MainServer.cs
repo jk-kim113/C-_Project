@@ -243,6 +243,15 @@ namespace Server_Scientia
 
                                     break;
 
+                                case DefinedProtocol.eFromClient.AddReleaseCard:
+
+                                    DefinedStructure.P_ReleaseCard pReleaseCard = new DefinedStructure.P_ReleaseCard();
+                                    pReleaseCard = (DefinedStructure.P_ReleaseCard)packet.Convert(pReleaseCard.GetType());
+
+                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.AddReleaseCard, pReleaseCard));
+
+                                    break;
+
                                 case DefinedProtocol.eFromClient.ConnectionTerminate:
 
                                     _socketManager.CloseSocket(packet._CastIdendifier);
@@ -431,6 +440,17 @@ namespace Server_Scientia
                                 }
 
                                 _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowCardReleaseInfo, pShowCardReleaseInfo, pCheckCardReleaseInfo._UUID));
+
+                                break;
+
+                            case DefinedProtocol.eToServer.CompleteAddReleaseCard:
+
+                                DefinedStructure.P_CheckRequest pCompleteAddReleaseCard = new DefinedStructure.P_CheckRequest();
+                                pCompleteAddReleaseCard = (DefinedStructure.P_CheckRequest)tData.Convert(pCompleteAddReleaseCard.GetType());
+
+                                DefinedStructure.P_Request pShowCompleteAddReleaseCard;
+
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.CompleteAddReleaseCard, pShowCompleteAddReleaseCard, pCompleteAddReleaseCard._UUID));
 
                                 break;
                         }
