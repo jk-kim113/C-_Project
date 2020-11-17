@@ -230,16 +230,16 @@ namespace Server_Scientia
                                     break;
                                 #endregion
 
-                                case DefinedProtocol.eFromClient.MyCardReleaseInfo:
+                                case DefinedProtocol.eFromClient.GetMyInfoData:
 
-                                    DefinedStructure.P_MyCardReleaseInfo pMyCardReleaseInfo = new DefinedStructure.P_MyCardReleaseInfo();
-                                    pMyCardReleaseInfo = (DefinedStructure.P_MyCardReleaseInfo)packet.Convert(pMyCardReleaseInfo.GetType());
+                                    DefinedStructure.P_GetMyInfoData pGetMyInfoData = new DefinedStructure.P_GetMyInfoData();
+                                    pGetMyInfoData = (DefinedStructure.P_GetMyInfoData)packet.Convert(pGetMyInfoData.GetType());
 
-                                    DefinedStructure.P_UserCardReleaseInfo pUserCardReleaseInfo;
-                                    pUserCardReleaseInfo._UUID = packet._UUID;
-                                    pUserCardReleaseInfo._nickName = pMyCardReleaseInfo._nickName;
+                                    DefinedStructure.P_UserMyInfoData pUserInfoData;
+                                    pUserInfoData._UUID = packet._UUID;
+                                    pUserInfoData._nickName = pGetMyInfoData._nickName;
 
-                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.UserCardReleaseInfo, pUserCardReleaseInfo));
+                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.UserMyInfoData, pUserInfoData));
 
                                     break;
 
@@ -424,22 +424,27 @@ namespace Server_Scientia
                                 break;
                             #endregion
 
-                            case DefinedProtocol.eToServer.ShowCardReleaseInfo:
+                            case DefinedProtocol.eToServer.ShowMyInfoData:
 
-                                DefinedStructure.P_CheckCardReleaseInfo pCheckCardReleaseInfo = new DefinedStructure.P_CheckCardReleaseInfo();
-                                pCheckCardReleaseInfo = (DefinedStructure.P_CheckCardReleaseInfo)tData.Convert(pCheckCardReleaseInfo.GetType());
+                                DefinedStructure.P_CheckMyInfoData pCheckMyInfoData = new DefinedStructure.P_CheckMyInfoData();
+                                pCheckMyInfoData = (DefinedStructure.P_CheckMyInfoData)tData.Convert(pCheckMyInfoData.GetType());
 
-                                DefinedStructure.P_ShowCardReleaseInfo pShowCardReleaseInfo;
-                                pShowCardReleaseInfo._cardIndexList = new int[48];
-                                for(int n = 0; n < pCheckCardReleaseInfo._cardIndexList.Length; n++)
-                                {
-                                    if (pCheckCardReleaseInfo._cardIndexList[n] == 0)
-                                        break;
+                                DefinedStructure.P_MyInfoData pMyInfoData;
+                                pMyInfoData._characIndex = pCheckMyInfoData._characIndex;
+                                pMyInfoData._levelArr = new int[5];
+                                Array.Copy(pCheckMyInfoData._levelArr, pMyInfoData._levelArr, pMyInfoData._levelArr.Length);
+                                pMyInfoData._expArr = new int[5];
+                                Array.Copy(pCheckMyInfoData._expArr, pMyInfoData._expArr, pMyInfoData._expArr.Length);
+                                pMyInfoData._cardReleaseArr = new int[48];
+                                Array.Copy(pCheckMyInfoData._cardReleaseArr, pMyInfoData._cardReleaseArr, pMyInfoData._cardReleaseArr.Length);
+                                pMyInfoData._cardRentalArr = new int[48];
+                                Array.Copy(pCheckMyInfoData._cardRentalArr, pMyInfoData._cardRentalArr, pMyInfoData._cardRentalArr.Length);
+                                pMyInfoData._rentalTimeArr = new float[48];
+                                Array.Copy(pCheckMyInfoData._rentalTimeArr, pMyInfoData._rentalTimeArr, pMyInfoData._rentalTimeArr.Length);
+                                pMyInfoData._myDeckArr = new int[12];
+                                Array.Copy(pCheckMyInfoData._myDeckArr, pMyInfoData._myDeckArr, pMyInfoData._myDeckArr.Length);
 
-                                    pShowCardReleaseInfo._cardIndexList[n] = pCheckCardReleaseInfo._cardIndexList[n];
-                                }
-
-                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowCardReleaseInfo, pShowCardReleaseInfo, pCheckCardReleaseInfo._UUID));
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowMyInfo, pMyInfoData, pCheckMyInfoData._UUID));
 
                                 break;
 

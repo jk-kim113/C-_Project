@@ -255,6 +255,116 @@ namespace DB_Scientia
             }
         }
 
+        public int SearchCharacterIndex(string nickName)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT CharacterIndex FROM characterinfo WHERE NickName = '{0}';", nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        return int.Parse(table["CharacterIndex"].ToString());
+                    }
+
+                    table.Close();
+                    return -1;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+
+            return -1;
+        }
+
+        public void SearchLevelInfo(string nickName, List<int> level)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT AccountLevel,PhysicsLevel,ChemistryLevel,BiologyLevel,AstronomyLevel FROM characterinfo WHERE NickName = '{0}';", nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        level.Add(int.Parse(table["AccountLevel"].ToString()));
+                        level.Add(int.Parse(table["PhysicsLevel"].ToString()));
+                        level.Add(int.Parse(table["ChemistryLevel"].ToString()));
+                        level.Add(int.Parse(table["BiologyLevel"].ToString()));
+                        level.Add(int.Parse(table["AstronomyLevel"].ToString()));
+                    }
+
+                    table.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public void SearchExpInfo(string nickName, List<int> exp)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT AccountExp,PhysicsExp,ChemistryExp,BiologyExp,AstronomyExp FROM characterinfo WHERE NickName = '{0}';", nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        exp.Add(int.Parse(table["AccountExp"].ToString()));
+                        exp.Add(int.Parse(table["PhysicsExp"].ToString()));
+                        exp.Add(int.Parse(table["ChemistryExp"].ToString()));
+                        exp.Add(int.Parse(table["BiologyExp"].ToString()));
+                        exp.Add(int.Parse(table["AstronomyExp"].ToString()));
+                    }
+
+                    table.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
         public void SearchCardReleaseInfo(string nickName, List<int> cardRelease)
         {
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
@@ -272,6 +382,105 @@ namespace DB_Scientia
                     while (table.Read())
                     {
                         cardRelease.Add(int.Parse(table["CardIndex"].ToString()));
+                    }
+
+                    table.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public void SearchCardRentalInfo(string nickName, List<int> cardRental)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT CardIndex FROM cardrentalinfo WHERE NickName = '{0}';", nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        cardRental.Add(int.Parse(table["CardIndex"].ToString()));
+                    }
+
+                    table.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public void SearchRentalTimeInfo(string nickName, List<float> rentaltime)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT TimeRemaining FROM cardrentalinfo WHERE NickName = '{0}';", nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        rentaltime.Add(float.Parse(table["TimeRemaining"].ToString()));
+                    }
+
+                    table.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public void SearchMyDeckInfo(string nickName, List<int> mydeck)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT CardIndex FROM mycardinfo WHERE NickName = '{0}';", nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        mydeck.Add(int.Parse(table["CardIndex"].ToString()));
                     }
 
                     table.Close();

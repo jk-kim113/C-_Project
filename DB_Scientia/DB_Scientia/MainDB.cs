@@ -176,12 +176,12 @@ namespace DB_Scientia
                                 break;
                             #endregion
 
-                            case DefinedProtocol.eFromServer.UserCardReleaseInfo:
+                            case DefinedProtocol.eFromServer.UserMyInfoData:
 
-                                DefinedStructure.P_UserCardReleaseInfo pUserCardReleaseInfo = new DefinedStructure.P_UserCardReleaseInfo();
-                                pUserCardReleaseInfo = (DefinedStructure.P_UserCardReleaseInfo)ConvertPacket.ByteArrayToStructure(packet._data, pUserCardReleaseInfo.GetType(), packet._totalSize);
+                                DefinedStructure.P_UserMyInfoData pUserMyInfoData = new DefinedStructure.P_UserMyInfoData();
+                                pUserMyInfoData = (DefinedStructure.P_UserMyInfoData)ConvertPacket.ByteArrayToStructure(packet._data, pUserMyInfoData.GetType(), packet._totalSize);
 
-                                CardReleaseInfo(pUserCardReleaseInfo._UUID, pUserCardReleaseInfo._nickName);
+                                UserMyInfoData(pUserMyInfoData._UUID, pUserMyInfoData._nickName);
 
                                 break;
 
@@ -341,18 +341,52 @@ namespace DB_Scientia
             ToPacket(DefinedProtocol.eToServer.CreateCharacterResult, pResult);
         }
 
-        void CardReleaseInfo(long uuid, string nickname)
+        void UserMyInfoData(long uuid, string nickname)
         {
+            DefinedStructure.P_CheckMyInfoData pCheckMyInfoData;
+            pCheckMyInfoData._UUID = uuid;
+            pCheckMyInfoData._characIndex = _dbQuery.SearchCharacterIndex(nickname);
+
             List<int> temp = new List<int>();
-            _dbQuery.SearchCardReleaseInfo(nickname, temp);
 
-            DefinedStructure.P_CheckCardReleaseInfo pCheckCardReleaseInfo;
-            pCheckCardReleaseInfo._UUID = uuid;
-            pCheckCardReleaseInfo._cardIndexList = new int[48];
+            _dbQuery.SearchLevelInfo(nickname, temp);
+            pCheckMyInfoData._levelArr = new int[5];
             for (int n = 0; n < temp.Count; n++)
-                pCheckCardReleaseInfo._cardIndexList[n] = temp[n];
+                pCheckMyInfoData._levelArr[n] = temp[n];
+            temp.Clear();
 
-            ToPacket(DefinedProtocol.eToServer.ShowCardReleaseInfo, pCheckCardReleaseInfo);
+            _dbQuery.SearchExpInfo(nickname, temp);
+            pCheckMyInfoData._expArr = new int[5];
+            for (int n = 0; n < temp.Count; n++)
+                pCheckMyInfoData._expArr[n] = temp[n];
+            temp.Clear();
+
+            _dbQuery.SearchCardReleaseInfo(nickname, temp);
+            pCheckMyInfoData._cardReleaseArr = new int[48];
+            for (int n = 0; n < temp.Count; n++)
+                pCheckMyInfoData._cardReleaseArr[n] = temp[n];
+            temp.Clear();
+
+            _dbQuery.SearchCardRentalInfo(nickname, temp);
+            pCheckMyInfoData._cardRentalArr = new int[48];
+            for (int n = 0; n < temp.Count; n++)
+                pCheckMyInfoData._cardRentalArr[n] = temp[n];
+            temp.Clear();
+
+            List<float> temp2 = new List<float>();
+            _dbQuery.SearchRentalTimeInfo(nickname, temp2);
+            pCheckMyInfoData._rentalTimeArr = new float[48];
+            for (int n = 0; n < temp.Count; n++)
+                pCheckMyInfoData._rentalTimeArr[n] = temp2[n];
+            temp2.Clear();
+
+            _dbQuery.SearchMyDeckInfo(nickname, temp);
+            pCheckMyInfoData._myDeckArr = new int[12];
+            for (int n = 0; n < temp.Count; n++)
+                pCheckMyInfoData._myDeckArr[n] = temp[n];
+            temp.Clear();
+
+            ToPacket(DefinedProtocol.eToServer.ShowMyInfoData, pCheckMyInfoData);
         }
 
         void AddCardRelease(string nickName, int cardIndex)
