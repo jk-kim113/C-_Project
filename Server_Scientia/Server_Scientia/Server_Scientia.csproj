@@ -50,6 +50,7 @@
     <Compile Include="PacketClass.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RoomSort.cs" />
     <Compile Include="SocketClass.cs" />
     <Compile Include="SocketManagerClass.cs" />
   </ItemGroup>

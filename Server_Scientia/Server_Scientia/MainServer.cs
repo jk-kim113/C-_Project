@@ -18,6 +18,9 @@ namespace Server_Scientia
         const int _dbPort = 81;
         Socket _dbServer;
 
+        int _roomNumber = 1;
+        RoomSort _roomInfoSort = new RoomSort();
+
         SocketManagerClass _socketManager = new SocketManagerClass();
 
         Queue<PacketClass> _fromClientQueue = new Queue<PacketClass>();
@@ -37,6 +40,17 @@ namespace Server_Scientia
         public MainServer()
         {
             CreateServer();
+
+            RoomSort.RoomInfo temp = new RoomSort.RoomInfo();
+            temp._name = "123";
+            temp._roomNumber = 0;
+            temp._rule = "sda";
+            temp._mode = "sadqw";
+            temp._isLock = false;
+            temp._userList = new List<string>();
+            temp._pw = "asda";
+
+            _roomInfoSort.CreateRoom("0", temp);
         }
 
         void CreateServer()
@@ -249,6 +263,40 @@ namespace Server_Scientia
                                     pReleaseCard = (DefinedStructure.P_ReleaseCard)packet.Convert(pReleaseCard.GetType());
 
                                     _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.AddReleaseCard, pReleaseCard));
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.CreateRoom:
+
+                                    DefinedStructure.P_CreateRoom pCreateRoom = new DefinedStructure.P_CreateRoom();
+                                    pCreateRoom = (DefinedStructure.P_CreateRoom)packet.Convert(pCreateRoom.GetType());
+
+                                    RoomSort.RoomInfo roomInfo;
+                                    roomInfo._roomNumber = _roomNumber++;
+                                    roomInfo._name = pCreateRoom._name;
+                                    roomInfo._isLock = pCreateRoom._isLock == 0;
+                                    roomInfo._pw = pCreateRoom._pw;
+                                    roomInfo._mode = pCreateRoom._mode;
+                                    roomInfo._rule = pCreateRoom._rule;
+                                    roomInfo._userList = new List<string>();
+                                    roomInfo._userList.Add(pCreateRoom._nickNaame);
+
+                                    _roomInfoSort.CreateRoom(pCreateRoom._mode, roomInfo);
+
+                                    DefinedStructure.P_Request pRequest;
+                                    _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.CompleteCreateRoom, pRequest, packet._UUID));
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.GetRoomList:
+
+                                    DefinedStructure.P_RoomInfoList pRoomInfoList;
+                                    pRoomInfoList._roomInfoList = new RoomSort.ShowRoom[640];
+                                    _roomInfoSort.GetRoomList(pRoomInfoList._roomInfoList);
+
+                                    _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowRoomList, pRoomInfoList, packet._UUID));
+
+                                    Console.WriteLine("asdsada");
 
                                     break;
 

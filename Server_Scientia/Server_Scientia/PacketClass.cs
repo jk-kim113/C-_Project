@@ -66,6 +66,7 @@ namespace Server_Scientia
             packet._data = new byte[1024];
 
             byte[] temp = ConvertPacket.StructureToByteArray(str);
+            Console.WriteLine(temp.Length);
             for (int n = 0; n < temp.Length; n++)
                 packet._data[n] = temp[n];
             packet._totalSize = temp.Length;

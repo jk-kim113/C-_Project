@@ -18,6 +18,8 @@ namespace Server_Scientia
             CreateCharacter,
             GetMyInfoData,
             AddReleaseCard,
+            CreateRoom,
+            GetRoomList,
 
             ConnectionTerminate,
 
@@ -35,6 +37,8 @@ namespace Server_Scientia
             EndCreateCharacter,
             ShowMyInfo,
             CompleteAddReleaseCard,
+            CompleteCreateRoom,
+            ShowRoomList,
 
             max
         }

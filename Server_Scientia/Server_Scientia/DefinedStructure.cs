@@ -69,6 +69,23 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _cardIndex;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_CreateRoom
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickNaame;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _name;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _isLock;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _pw;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _mode;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _rule;
+        }
         #endregion
 
         #region ToClient
@@ -118,6 +135,13 @@ namespace Server_Scientia
             public float[] _rentalTimeArr;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
             public int[] _myDeckArr;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_RoomInfoList
+        {
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 640)]
+            public RoomSort.ShowRoom[] _roomInfoList;
         }
         #endregion
 
