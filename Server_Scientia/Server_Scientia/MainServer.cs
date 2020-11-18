@@ -40,17 +40,6 @@ namespace Server_Scientia
         public MainServer()
         {
             CreateServer();
-
-            RoomSort.RoomInfo temp = new RoomSort.RoomInfo();
-            temp._name = "123";
-            temp._roomNumber = 0;
-            temp._rule = "sda";
-            temp._mode = "sadqw";
-            temp._isLock = false;
-            temp._userList = new List<string>();
-            temp._pw = "asda";
-
-            _roomInfoSort.CreateRoom("0", temp);
         }
 
         void CreateServer()
@@ -290,13 +279,26 @@ namespace Server_Scientia
 
                                 case DefinedProtocol.eFromClient.GetRoomList:
 
-                                    DefinedStructure.P_RoomInfoList pRoomInfoList;
-                                    pRoomInfoList._roomInfoList = new RoomSort.ShowRoom[640];
-                                    _roomInfoSort.GetRoomList(pRoomInfoList._roomInfoList);
+                                    foreach(string key in _roomInfoSort._roomList.Keys)
+                                    {
+                                        for(int n = 0; n < _roomInfoSort._roomList[key].Count; n++)
+                                        {
+                                            DefinedStructure.P_RoomInfo pRoomInfo;
+                                            pRoomInfo._roomNumber = _roomInfoSort._roomList[key][n]._roomNumber;
+                                            pRoomInfo._name = _roomInfoSort._roomList[key][n]._name;
+                                            pRoomInfo._isLock = _roomInfoSort._roomList[key][n]._isLock ? 0 : 1;
+                                            pRoomInfo._currentMemberCnt = _roomInfoSort._roomList[key][n]._userList.Count;
+                                            pRoomInfo._maxMemberCnt = 4;
+                                            pRoomInfo._mode = _roomInfoSort._roomList[key][n]._mode;
+                                            pRoomInfo._rule = _roomInfoSort._roomList[key][n]._rule;
+                                            pRoomInfo._isPlay = 0;
 
-                                    _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowRoomList, pRoomInfoList, packet._UUID));
+                                            _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowRoomList, pRoomInfo, packet._UUID));
+                                        }
+                                    }
 
-                                    Console.WriteLine("asdsada");
+                                    DefinedStructure.P_Request pFinishShowRoom;
+                                    _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.FinishShowRoom, pFinishShowRoom, packet._UUID));
 
                                     break;
 

@@ -39,6 +39,7 @@ namespace Server_Scientia
             CompleteAddReleaseCard,
             CompleteCreateRoom,
             ShowRoomList,
+            FinishShowRoom,
 
             max
         }

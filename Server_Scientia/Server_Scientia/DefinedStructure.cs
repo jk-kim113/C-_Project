@@ -138,10 +138,24 @@ namespace Server_Scientia
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct P_RoomInfoList
+        public struct P_RoomInfo
         {
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 640)]
-            public RoomSort.ShowRoom[] _roomInfoList;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _name;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _isLock;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _currentMemberCnt;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _maxMemberCnt;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _mode;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _rule;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _isPlay;
         }
         #endregion
 
