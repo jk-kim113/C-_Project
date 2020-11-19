@@ -18,6 +18,7 @@ namespace DB_Scientia
             CreateCharacter,
             UserMyInfoData,
             AddReleaseCard,
+            GetBattleInfo,
 
             max
         }
@@ -33,6 +34,7 @@ namespace DB_Scientia
             CreateCharacterResult,
             ShowMyInfoData,
             CompleteAddReleaseCard,
+            ShowBattleInfo,
 
             max
         }

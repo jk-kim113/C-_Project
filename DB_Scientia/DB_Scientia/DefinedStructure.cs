@@ -144,5 +144,29 @@ namespace DB_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _cardIndex;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_GetBattleInfo
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowBattleInfo
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _accountlevel;
+        }
     }
 }

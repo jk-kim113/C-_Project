@@ -328,6 +328,42 @@ namespace DB_Scientia
             }
         }
 
+        public int SearchAccountLevel(string nickName)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT AccountLevel FROM characterinfo WHERE NickName = '{0}';", nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        return int.Parse(table["AccountLevel"].ToString());
+                    }
+
+                    table.Close();
+                    return -1;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+
+                return -1;
+            }
+        }
+
         public void SearchExpInfo(string nickName, List<int> exp)
         {
             using (MySqlConnection connection = new MySqlConnection(_connectionString))

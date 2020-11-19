@@ -233,6 +233,7 @@ namespace Server_Scientia
                                     break;
                                 #endregion
 
+                                #region Card
                                 case DefinedProtocol.eFromClient.GetMyInfoData:
 
                                     DefinedStructure.P_GetMyInfoData pGetMyInfoData = new DefinedStructure.P_GetMyInfoData();
@@ -254,43 +255,50 @@ namespace Server_Scientia
                                     _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.AddReleaseCard, pReleaseCard));
 
                                     break;
+                                #endregion
 
                                 case DefinedProtocol.eFromClient.CreateRoom:
 
                                     DefinedStructure.P_CreateRoom pCreateRoom = new DefinedStructure.P_CreateRoom();
                                     pCreateRoom = (DefinedStructure.P_CreateRoom)packet.Convert(pCreateRoom.GetType());
 
-                                    RoomSort.RoomInfo roomInfo;
+                                    RoomSort.RoomInfo roomInfo = new RoomSort.RoomInfo();
                                     roomInfo._roomNumber = _roomNumber++;
                                     roomInfo._name = pCreateRoom._name;
                                     roomInfo._isLock = pCreateRoom._isLock == 0;
                                     roomInfo._pw = pCreateRoom._pw;
                                     roomInfo._mode = pCreateRoom._mode;
                                     roomInfo._rule = pCreateRoom._rule;
-                                    roomInfo._userList = new List<string>();
-                                    roomInfo._userList.Add(pCreateRoom._nickNaame);
+                                    roomInfo._master = pCreateRoom._nickName;
+                                    roomInfo._userList = new List<RoomSort.UserInfo>();
 
+                                    for(int n = 0; n < 4; n++)
+                                    {
+                                        RoomSort.UserInfo userInfo = new RoomSort.UserInfo();
+                                        userInfo._isEmpty = true;
+                                        roomInfo._userList.Add(userInfo);
+                                    }
+                                    
                                     _roomInfoSort.CreateRoom(pCreateRoom._mode, roomInfo);
 
-                                    DefinedStructure.P_Request pRequest;
-                                    _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.CompleteCreateRoom, pRequest, packet._UUID));
+                                    GetBattleInfo(roomInfo._roomNumber, packet._UUID, pCreateRoom._nickName);
 
                                     break;
 
                                 case DefinedProtocol.eFromClient.GetRoomList:
 
-                                    foreach(string key in _roomInfoSort._roomList.Keys)
+                                    foreach(string key in _roomInfoSort._RoomList.Keys)
                                     {
-                                        for(int n = 0; n < _roomInfoSort._roomList[key].Count; n++)
+                                        for(int n = 0; n < _roomInfoSort._RoomList[key].Count; n++)
                                         {
                                             DefinedStructure.P_RoomInfo pRoomInfo;
-                                            pRoomInfo._roomNumber = _roomInfoSort._roomList[key][n]._roomNumber;
-                                            pRoomInfo._name = _roomInfoSort._roomList[key][n]._name;
-                                            pRoomInfo._isLock = _roomInfoSort._roomList[key][n]._isLock ? 0 : 1;
-                                            pRoomInfo._currentMemberCnt = _roomInfoSort._roomList[key][n]._userList.Count;
+                                            pRoomInfo._roomNumber = _roomInfoSort._RoomList[key][n]._roomNumber;
+                                            pRoomInfo._name = _roomInfoSort._RoomList[key][n]._name;
+                                            pRoomInfo._isLock = _roomInfoSort._RoomList[key][n]._isLock ? 0 : 1;
+                                            pRoomInfo._currentMemberCnt = _roomInfoSort._RoomList[key][n]._userList.Count;
                                             pRoomInfo._maxMemberCnt = 4;
-                                            pRoomInfo._mode = _roomInfoSort._roomList[key][n]._mode;
-                                            pRoomInfo._rule = _roomInfoSort._roomList[key][n]._rule;
+                                            pRoomInfo._mode = _roomInfoSort._RoomList[key][n]._mode;
+                                            pRoomInfo._rule = _roomInfoSort._RoomList[key][n]._rule;
                                             pRoomInfo._isPlay = 0;
 
                                             _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowRoomList, pRoomInfo, packet._UUID));
@@ -299,6 +307,63 @@ namespace Server_Scientia
 
                                     DefinedStructure.P_Request pFinishShowRoom;
                                     _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.FinishShowRoom, pFinishShowRoom, packet._UUID));
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.TryEnterRoom:
+
+                                    DefinedStructure.P_TryEnterRoom pTryEnterRoom = new DefinedStructure.P_TryEnterRoom();
+                                    pTryEnterRoom = (DefinedStructure.P_TryEnterRoom)packet.Convert(pTryEnterRoom.GetType());
+
+                                    GetBattleInfo(pTryEnterRoom._roomNumber, packet._UUID, pTryEnterRoom._nickName);
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.InformReady:
+
+                                    DefinedStructure.P_InformRoomInfo pInformReady = new DefinedStructure.P_InformRoomInfo();
+                                    pInformReady = (DefinedStructure.P_InformRoomInfo)packet.Convert(pInformReady.GetType());
+
+                                    RoomSort.RoomInfo roomReady = _roomInfoSort.GetRoom(pInformReady._roomNumber);
+                                    RoomSort.UserInfo user = new RoomSort.UserInfo();
+                                    for (int n = 0; n < roomReady._userList.Count; n++)
+                                    {
+                                        if(roomReady._userList[n]._UUID == packet._UUID)
+                                        {
+                                            user = roomReady._userList[n];
+                                            break;
+                                        }
+                                    }
+
+                                    user._isReady = !user._isReady;
+
+                                    DefinedStructure.P_ShowReady pShowReady;
+                                    pShowReady._index = user._index;
+                                    pShowReady._isReady = user._isReady ? 0 : 1;
+
+                                    for(int n = 0; n < roomReady._userList.Count; n++)
+                                    {
+                                        if(!roomReady._userList[n]._isEmpty)
+                                            _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowReady, pShowReady, roomReady._userList[n]._UUID));
+                                    }
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.InformGameStart:
+
+                                    DefinedStructure.P_InformRoomInfo pInformGameStart = new DefinedStructure.P_InformRoomInfo();
+                                    pInformGameStart = (DefinedStructure.P_InformRoomInfo)packet.Convert(pInformGameStart.GetType());
+
+                                    RoomSort.RoomInfo roomStart = _roomInfoSort.GetRoom(pInformGameStart._roomNumber);
+
+                                    if(CheckAllReady(roomStart))
+                                    {
+                                        //TODO Game Start
+                                    }
+                                    else
+                                    {
+                                        //TODO Can not Play Game
+                                    }
 
                                     break;
 
@@ -474,6 +539,7 @@ namespace Server_Scientia
                                 break;
                             #endregion
 
+                            #region Card
                             case DefinedProtocol.eToServer.ShowMyInfoData:
 
                                 DefinedStructure.P_CheckMyInfoData pCheckMyInfoData = new DefinedStructure.P_CheckMyInfoData();
@@ -508,6 +574,58 @@ namespace Server_Scientia
                                 _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.CompleteAddReleaseCard, pShowCompleteAddReleaseCard, pCompleteAddReleaseCard._UUID));
 
                                 break;
+                            #endregion
+
+                            case DefinedProtocol.eToServer.ShowBattleInfo:
+
+                                DefinedStructure.P_ShowBattleInfo pShowBattleInfo = new DefinedStructure.P_ShowBattleInfo();
+                                pShowBattleInfo = (DefinedStructure.P_ShowBattleInfo)tData.Convert(pShowBattleInfo.GetType());
+
+                                RoomSort.RoomInfo room = _roomInfoSort.GetRoom(pShowBattleInfo._roomNumber);
+
+                                RoomSort.UserInfo userInfo = new RoomSort.UserInfo();
+                                userInfo._index = room.EmptyIndex();
+                                userInfo._UUID = pShowBattleInfo._UUID;
+                                userInfo._nickName = pShowBattleInfo._nickName;
+                                userInfo._level = pShowBattleInfo._accountlevel;
+                                userInfo._isEmpty = false;
+                                userInfo._isReady = false;
+
+                                room._userList.Add(userInfo);
+
+                                for(int n = 0; n < room._userList.Count; n++)
+                                {
+                                    if(!room._userList[n]._isEmpty)
+                                    {
+                                        DefinedStructure.P_UserInfo pUserInfo;
+                                        pUserInfo._roomNumber = pShowBattleInfo._roomNumber;
+                                        pUserInfo._index = room._userList[n]._index;
+                                        pUserInfo._nickName = room._userList[n]._nickName;
+                                        pUserInfo._accountLevel = room._userList[n]._level;
+                                        pUserInfo._isReady = room._userList[n]._isReady ? 0 : 1;
+
+                                        for (int m = 0; m < room._userList.Count; m++)
+                                        {
+                                            if (!room._userList[m]._isEmpty)
+                                            {
+                                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.EnterRoom, pUserInfo, room._userList[m]._UUID));
+                                            }
+                                        }
+                                    }
+                                }
+
+                                DefinedStructure.P_MasterInfo pMasterInfo;
+                                pMasterInfo._masterName = room._master;
+
+                                for (int n = 0; n < room._userList.Count; n++)
+                                {
+                                    if (!room._userList[n]._isEmpty)
+                                    {
+                                        _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowMaster, pMasterInfo, room._userList[n]._UUID));
+                                    }
+                                }
+
+                                break;
                         }
                     }
 
@@ -519,6 +637,29 @@ namespace Server_Scientia
                 Console.WriteLine(e.Message);
                 Console.WriteLine(e.StackTrace);
             }
+        }
+
+        void GetBattleInfo(int roomNum, long uuid, string nickName)
+        {
+            DefinedStructure.P_GetBattleInfo pGetBattleInfo;
+            pGetBattleInfo._roomNumber = roomNum;
+            pGetBattleInfo._UUID = uuid;
+            pGetBattleInfo._nickName = nickName;
+
+            _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.GetBattleInfo, pGetBattleInfo));
+        }
+
+        bool CheckAllReady(RoomSort.RoomInfo room)
+        {
+            for (int n = 0; n < room._userList.Count; n++)
+            {
+                if (!room._userList[n]._isReady)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public void MainLoop()

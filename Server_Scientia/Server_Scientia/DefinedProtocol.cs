@@ -20,6 +20,9 @@ namespace Server_Scientia
             AddReleaseCard,
             CreateRoom,
             GetRoomList,
+            TryEnterRoom,
+            InformReady,
+            InformGameStart,
 
             ConnectionTerminate,
 
@@ -37,9 +40,11 @@ namespace Server_Scientia
             EndCreateCharacter,
             ShowMyInfo,
             CompleteAddReleaseCard,
-            CompleteCreateRoom,
+            EnterRoom,
             ShowRoomList,
             FinishShowRoom,
+            ShowReady,
+            ShowMaster,
 
             max
         }
@@ -54,6 +59,7 @@ namespace Server_Scientia
             CreateCharacter,
             UserMyInfoData,
             AddReleaseCard,
+            GetBattleInfo,
 
             max
         }
@@ -69,6 +75,7 @@ namespace Server_Scientia
             CreateCharacterResult,
             ShowMyInfoData,
             CompleteAddReleaseCard,
+            ShowBattleInfo,
 
             max
         }

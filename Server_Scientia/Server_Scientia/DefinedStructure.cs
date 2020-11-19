@@ -74,7 +74,7 @@ namespace Server_Scientia
         public struct P_CreateRoom
         {
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
-            public string _nickNaame;
+            public string _nickName;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
             public string _name;
             [MarshalAs(UnmanagedType.I4)]
@@ -85,6 +85,22 @@ namespace Server_Scientia
             public string _mode;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
             public string _rule;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_TryEnterRoom
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_InformRoomInfo
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
         }
         #endregion
 
@@ -157,6 +173,37 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _isPlay;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_UserInfo
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _accountLevel;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _isReady;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_MasterInfo
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _masterName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowReady
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _isReady;
+        }
         #endregion
 
         #region FromServer
@@ -205,6 +252,17 @@ namespace Server_Scientia
         [StructLayout(LayoutKind.Sequential)]
         public struct P_UserMyInfoData
         {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_GetBattleInfo
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
             [MarshalAs(UnmanagedType.I8)]
             public long _UUID;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
@@ -276,6 +334,19 @@ namespace Server_Scientia
             public float[] _rentalTimeArr;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
             public int[] _myDeckArr;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowBattleInfo
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _accountlevel;
         }
         #endregion
     }

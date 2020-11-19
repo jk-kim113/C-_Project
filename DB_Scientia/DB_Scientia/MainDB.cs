@@ -176,6 +176,7 @@ namespace DB_Scientia
                                 break;
                             #endregion
 
+                            #region Card
                             case DefinedProtocol.eFromServer.UserMyInfoData:
 
                                 DefinedStructure.P_UserMyInfoData pUserMyInfoData = new DefinedStructure.P_UserMyInfoData();
@@ -191,6 +192,16 @@ namespace DB_Scientia
                                 pReleaseCard = (DefinedStructure.P_ReleaseCard)ConvertPacket.ByteArrayToStructure(packet._data, pReleaseCard.GetType(), packet._totalSize);
 
                                 AddCardRelease(pReleaseCard._nickName, pReleaseCard._cardIndex);
+
+                                break;
+                            #endregion
+
+                            case DefinedProtocol.eFromServer.GetBattleInfo:
+
+                                DefinedStructure.P_GetBattleInfo pGetBattleInfo = new DefinedStructure.P_GetBattleInfo();
+                                pGetBattleInfo = (DefinedStructure.P_GetBattleInfo)ConvertPacket.ByteArrayToStructure(packet._data, pGetBattleInfo.GetType(), packet._totalSize);
+
+                                GetBattleInfo(pGetBattleInfo._roomNumber, pGetBattleInfo._UUID, pGetBattleInfo._nickName);
 
                                 break;
                         }
@@ -397,6 +408,17 @@ namespace DB_Scientia
             pCheckRequest._UUID = _dbQuery.SearchUUIDwithNickName(nickName);
 
             ToPacket(DefinedProtocol.eToServer.CompleteAddReleaseCard, pCheckRequest);
+        }
+
+        void GetBattleInfo(int roomNumber, long uuid, string nickName)
+        {
+            DefinedStructure.P_ShowBattleInfo pShowBattleInfo;
+            pShowBattleInfo._roomNumber = roomNumber;
+            pShowBattleInfo._UUID = uuid;
+            pShowBattleInfo._nickName = nickName;
+            pShowBattleInfo._accountlevel = _dbQuery.SearchAccountLevel(nickName);
+
+            ToPacket(DefinedProtocol.eToServer.ShowBattleInfo, pShowBattleInfo);
         }
 
         void ToPacket(DefinedProtocol.eToServer toServer, object str)

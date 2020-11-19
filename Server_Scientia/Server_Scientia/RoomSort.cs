@@ -8,7 +8,7 @@ namespace Server_Scientia
 {
     class RoomSort
     {   
-        public struct RoomInfo
+        public class RoomInfo
         {
             public int _roomNumber;
             public string _name;
@@ -16,12 +16,34 @@ namespace Server_Scientia
             public string _pw;
             public string _mode;
             public string _rule;
+            public string _master;
 
-            public List<string> _userList;
+            public List<UserInfo> _userList;
+
+            public int EmptyIndex()
+            {
+                for(int n = 0; n < _userList.Count; n++)
+                {
+                    if (_userList[n]._isEmpty)
+                        return n;
+                }
+
+                return -1;
+            }
+        }
+
+        public class UserInfo
+        {
+            public int _index;
+            public long _UUID;
+            public string _nickName;
+            public int _level;
+            public bool _isEmpty;
+            public bool _isReady;
         }
 
         Dictionary<string, List<RoomInfo>> _roomInfoDic = new Dictionary<string, List<RoomInfo>>();
-        public Dictionary<string, List<RoomInfo>> _roomList { get { return _roomInfoDic; } }
+        public Dictionary<string, List<RoomInfo>> _RoomList { get { return _roomInfoDic; } }
 
         public void CreateRoom(string mode, RoomInfo room)
         {
@@ -38,6 +60,20 @@ namespace Server_Scientia
             }
 
             HeapSort(mode);
+        }
+
+        public RoomInfo GetRoom(int roomNum)
+        {
+            foreach(string key in _roomInfoDic.Keys)
+            {
+                for(int n = 0; n < _roomInfoDic[key].Count; n++)
+                {
+                    if (_roomInfoDic[key][n]._roomNumber == roomNum)
+                        return _roomInfoDic[key][n];
+                }
+            }
+
+            return new RoomInfo();
         }
 
         void HeapSort(string mode)
