@@ -45,6 +45,9 @@ namespace Server_Scientia
             FinishShowRoom,
             ShowReady,
             ShowMaster,
+            CannotPlay,
+            GameStart,
+            ShowPickedCard,
 
             max
         }
@@ -60,6 +63,7 @@ namespace Server_Scientia
             UserMyInfoData,
             AddReleaseCard,
             GetBattleInfo,
+            GetAllCard,
 
             max
         }
@@ -76,6 +80,7 @@ namespace Server_Scientia
             ShowMyInfoData,
             CompleteAddReleaseCard,
             ShowBattleInfo,
+            ShowAllCard,
 
             max
         }

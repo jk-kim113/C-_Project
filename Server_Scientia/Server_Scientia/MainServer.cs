@@ -278,7 +278,8 @@ namespace Server_Scientia
                                         userInfo._isEmpty = true;
                                         roomInfo._userList.Add(userInfo);
                                     }
-                                    
+
+                                    roomInfo._userList[0]._isReady = true;
                                     _roomInfoSort.CreateRoom(pCreateRoom._mode, roomInfo);
 
                                     GetBattleInfo(roomInfo._roomNumber, packet._UUID, pCreateRoom._nickName);
@@ -358,11 +359,51 @@ namespace Server_Scientia
 
                                     if(CheckAllReady(roomStart))
                                     {
-                                        //TODO Game Start
+                                        //TODO Game Start Change Bool Value to Playing true
+
+                                        DefinedStructure.P_Request pGameStart;
+                                        for(int n = 0; n < roomStart._userList.Count; n++)
+                                        {
+                                            _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.GameStart, pGameStart, roomStart._userList[n]._UUID));
+                                        }
+
+                                        RoomSort.CardInfo cardInfo = new RoomSort.CardInfo();
+                                        cardInfo._cardGroup.Add("Physics", new List<int>());
+                                        cardInfo._cardGroup.Add("Chemistry", new List<int>());
+                                        cardInfo._cardGroup.Add("Biology", new List<int>());
+                                        cardInfo._cardGroup.Add("Astronomy", new List<int>());
+
+                                        roomStart._cardInfo = cardInfo;
+
+                                        switch (roomStart._mode)
+                                        {
+                                            case "나만의_덱":
+
+                                                break;
+
+                                            case "랜덤_덱":
+                                            case "모두의_덱":
+
+                                                DefinedStructure.P_GetAllCard pGetAllCard;
+                                                pGetAllCard._roomNumber = roomStart._roomNumber;
+                                                pGetAllCard._nickNameArr = string.Empty;
+
+                                                for (int n = 0; n < roomStart._userList.Count; n++)
+                                                    pGetAllCard._nickNameArr += roomStart._userList[n]._nickName + ",";
+
+                                                _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.GetAllCard, pGetAllCard));
+
+                                                break;
+
+                                            case "AI대전":
+
+                                                break;
+                                        }
                                     }
                                     else
                                     {
-                                        //TODO Can not Play Game
+                                        DefinedStructure.P_Request pCannotPlay;
+                                        _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.CannotPlay, pCannotPlay, packet._UUID));
                                     }
 
                                     break;
@@ -626,6 +667,27 @@ namespace Server_Scientia
                                 }
 
                                 break;
+
+                            case DefinedProtocol.eToServer.ShowAllCard:
+
+                                DefinedStructure.P_ShowAllCard pShowAllCard = new DefinedStructure.P_ShowAllCard();
+                                pShowAllCard = (DefinedStructure.P_ShowAllCard)tData.Convert(pShowAllCard.GetType());
+
+                                RoomSort.RoomInfo roomToBattle = _roomInfoSort.GetRoom(pShowAllCard._roomNum);
+
+                                switch(roomToBattle._mode)
+                                {
+                                    case "랜덤_덱":
+
+                                        PickCardRandomly(roomToBattle, pShowAllCard._cardArr, pShowAllCard._cardCount);
+
+                                        break;
+
+                                    case "모두의_덱":
+                                        break;
+                                }
+
+                                break;
                         }
                     }
 
@@ -660,6 +722,66 @@ namespace Server_Scientia
             }
 
             return true;
+        }
+
+        void PickCardRandomly(RoomSort.RoomInfo room, int[] cardArr, int cardCnt)
+        {
+            Random rd = new Random();
+
+            //TODO 1번 뽑으면 자동으로 2번은 뽑히지 않음
+            List<int> normalCard = new List<int>();
+            List<int> nonNormalCard = new List<int>();
+
+            for(int n = 0; n < cardCnt; n++)
+            {
+                if (cardArr[n] == 0)
+                    normalCard.Add(cardArr[n]);
+                else
+                    nonNormalCard.Add(cardArr[n]);
+            }
+
+            int selectIndex = 0;
+
+            for(int n = 0; n < 4; n++)
+            {
+                do
+                {
+                    selectIndex = rd.Next(0, normalCard.Count);
+                }
+                while (room._cardInfo._cardGroup["Physics"].Contains(cardArr[selectIndex]) && cardArr[selectIndex] != 0);
+
+                room._cardInfo._cardGroup["Physics"].Add(selectIndex);
+            }
+
+            while(room._cardInfo.IsReady())
+            {
+                do
+                {
+                    selectIndex = rd.Next(0, nonNormalCard.Count);
+                }
+                while (room._cardInfo._cardGroup["Physics"].Contains(cardArr[selectIndex]) && room._cardInfo._cardGroup["Physics"].Count < 3 && cardArr[selectIndex] != 0);
+
+                room._cardInfo._cardGroup["Physics"].Add(selectIndex);
+            }
+
+            DefinedStructure.P_PickedCard pPickedCard;
+            pPickedCard._pickedCardArr = new int[12];
+            int packIdx = 0;
+            foreach(string key in room._cardInfo._cardGroup.Keys)
+            {
+                for(int n = 0; n < room._cardInfo._cardGroup[key].Count; n++)
+                {
+                    pPickedCard._pickedCardArr[packIdx++] = room._cardInfo._cardGroup[key][n];
+                }
+            }
+
+            for (int n = 0; n < room._userList.Count; n++)
+            {
+                if (!room._userList[n]._isEmpty)
+                {
+                    _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowPickedCard, pPickedCard, room._userList[n]._UUID));
+                }
+            }
         }
 
         public void MainLoop()

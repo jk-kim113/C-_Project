@@ -204,6 +204,15 @@ namespace DB_Scientia
                                 GetBattleInfo(pGetBattleInfo._roomNumber, pGetBattleInfo._UUID, pGetBattleInfo._nickName);
 
                                 break;
+
+                            case DefinedProtocol.eFromServer.GetAllCard:
+
+                                DefinedStructure.P_GetAllCard pGetAllCard = new DefinedStructure.P_GetAllCard();
+                                pGetAllCard = (DefinedStructure.P_GetAllCard)ConvertPacket.ByteArrayToStructure(packet._data, pGetAllCard.GetType(), packet._totalSize);
+
+                                GetAllCard(pGetAllCard._roomNumber, pGetAllCard._nickNameArr);
+
+                                break;
                         }
                     }
 
@@ -419,6 +428,20 @@ namespace DB_Scientia
             pShowBattleInfo._accountlevel = _dbQuery.SearchAccountLevel(nickName);
 
             ToPacket(DefinedProtocol.eToServer.ShowBattleInfo, pShowBattleInfo);
+        }
+
+        void GetAllCard(int roomNum, string nickNameArr)
+        {
+            List<int> allcard = new List<int>();
+            _dbQuery.SearchAllCard(nickNameArr, allcard);
+
+            DefinedStructure.P_ShowAllCard pShowAllCard;
+            pShowAllCard._roomNum = roomNum;
+            pShowAllCard._cardCount = allcard.Count;
+            pShowAllCard._cardArr = new int[48];
+            Array.Copy(allcard.ToArray(), pShowAllCard._cardArr, 48);
+
+            ToPacket(DefinedProtocol.eToServer.ShowAllCard, pShowAllCard);
         }
 
         void ToPacket(DefinedProtocol.eToServer toServer, object str)

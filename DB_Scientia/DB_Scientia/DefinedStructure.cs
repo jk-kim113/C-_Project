@@ -168,5 +168,25 @@ namespace DB_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _accountlevel;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_GetAllCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickNameArr;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowAllCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNum;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 48)]
+            public int[] _cardArr;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _cardCount;
+        }
     }
 }

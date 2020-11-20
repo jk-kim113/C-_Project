@@ -533,6 +533,42 @@ namespace DB_Scientia
             }
         }
 
+        public void SearchAllCard(string nickNameArr, List<int> allCard)
+        {
+            string[] nickName = new string[4];
+            Array.Copy(nickNameArr.Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries), nickName, 4);
+
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT DISTINCT CardIndex FROM cardreleaseinfo WHERE NickName IN ('{0}','{1}','{2}','{3}';", nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        allCard.Add(int.Parse(table["CardIndex"].ToString()));
+                    }
+
+                    table.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
         public bool InsertUserInfo(string id, string pw)
         {
             using (MySqlConnection connection = new MySqlConnection(_connectionString))

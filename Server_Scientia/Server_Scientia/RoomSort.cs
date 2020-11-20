@@ -20,6 +20,8 @@ namespace Server_Scientia
 
             public List<UserInfo> _userList;
 
+            public CardInfo _cardInfo;
+
             public int EmptyIndex()
             {
                 for(int n = 0; n < _userList.Count; n++)
@@ -40,6 +42,22 @@ namespace Server_Scientia
             public int _level;
             public bool _isEmpty;
             public bool _isReady;
+        }
+
+        public class CardInfo
+        {
+            public Dictionary<string, List<int>> _cardGroup;
+
+            public bool IsReady()
+            {
+                foreach(string key in _cardGroup.Keys)
+                {
+                    if (_cardGroup[key].Count != 3)
+                        return false;
+                }
+
+                return true;
+            }
         }
 
         Dictionary<string, List<RoomInfo>> _roomInfoDic = new Dictionary<string, List<RoomInfo>>();

@@ -204,6 +204,13 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _isReady;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_PickedCard
+        {
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
+            public int[] _pickedCardArr;
+        }
         #endregion
 
         #region FromServer
@@ -267,6 +274,15 @@ namespace Server_Scientia
             public long _UUID;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
             public string _nickName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_GetAllCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickNameArr;
         }
         #endregion
 
@@ -347,6 +363,17 @@ namespace Server_Scientia
             public string _nickName;
             [MarshalAs(UnmanagedType.I4)]
             public int _accountlevel;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowAllCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNum;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 48)]
+            public int[] _cardArr;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _cardCount;
         }
         #endregion
     }

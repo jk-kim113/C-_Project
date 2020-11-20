@@ -19,6 +19,7 @@ namespace DB_Scientia
             UserMyInfoData,
             AddReleaseCard,
             GetBattleInfo,
+            GetAllCard,
 
             max
         }
@@ -35,6 +36,7 @@ namespace DB_Scientia
             ShowMyInfoData,
             CompleteAddReleaseCard,
             ShowBattleInfo,
+            ShowAllCard,
 
             max
         }
