@@ -289,7 +289,7 @@ namespace Server_Scientia
                                     roomInfo._pw = pCreateRoom._pw;
                                     roomInfo._mode = pCreateRoom._mode;
                                     roomInfo._rule = pCreateRoom._rule;
-                                    roomInfo._master = pCreateRoom._nickName;
+                                    roomInfo._master = 0;
                                     roomInfo._userList = new List<RoomSort.UserInfo>();
                                     roomInfo._currentMemberCnt = 0;
 
@@ -393,7 +393,6 @@ namespace Server_Scientia
                                             cardInfo._cardGroup.Add((eCardField)n, new List<int>());
 
                                         roomStart._cardInfo = cardInfo;
-                                        Console.WriteLine(roomStart._mode);
                                         switch (roomStart._mode)
                                         {
                                             case "나만의_덱":
@@ -423,6 +422,42 @@ namespace Server_Scientia
                                     {
                                         DefinedStructure.P_Request pCannotPlay;
                                         _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.CannotPlay, pCannotPlay, packet._UUID));
+                                    }
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.FinishReadCard:
+
+                                    DefinedStructure.P_InformRoomInfo pFinishReadCard = new DefinedStructure.P_InformRoomInfo();
+                                    pFinishReadCard = (DefinedStructure.P_InformRoomInfo)packet.Convert(pFinishReadCard.GetType());
+
+                                    RoomSort.RoomInfo roomFinishReadCard = _roomInfoSort.GetRoom(pFinishReadCard._roomNumber);
+
+                                    for (int n = 0; n < roomFinishReadCard._userList.Count; n++)
+                                    {
+                                        if (roomFinishReadCard._userList[n]._UUID == packet._UUID)
+                                        {
+                                            roomFinishReadCard._userList[n]._isFinishReadCard = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if(CheckAllReadCard(roomFinishReadCard))
+                                    {
+                                        roomFinishReadCard._thisTurn = roomFinishReadCard._master - 1;
+                                        if (roomFinishReadCard._thisTurn < 0)
+                                            roomFinishReadCard._thisTurn = roomFinishReadCard._currentMemberCnt - 1;
+
+                                        DefinedStructure.P_ThisTurn pPickCard;
+                                        pPickCard._index = roomFinishReadCard._thisTurn;
+
+                                        for (int m = 0; m < roomFinishReadCard._userList.Count; m++)
+                                        {
+                                            if (!roomFinishReadCard._userList[m]._isEmpty)
+                                            {
+                                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.PickCard, pPickCard, roomFinishReadCard._userList[m]._UUID));
+                                            }
+                                        }
                                     }
 
                                     break;
@@ -649,7 +684,7 @@ namespace Server_Scientia
                                 userInfo._nickName = pShowBattleInfo._nickName;
                                 userInfo._level = pShowBattleInfo._accountlevel;
                                 userInfo._isEmpty = false;
-                                userInfo._isReady = room._master == pShowBattleInfo._nickName;
+                                userInfo._isReady = room._master == userInfo._index;
 
                                 for (int n = 0; n < room._userList.Count; n++)
                                 {
@@ -683,7 +718,7 @@ namespace Server_Scientia
                                 }
 
                                 DefinedStructure.P_MasterInfo pMasterInfo;
-                                pMasterInfo._masterName = room._master;
+                                pMasterInfo._masterName = room._userList[room._master]._nickName;
 
                                 for (int n = 0; n < room._userList.Count; n++)
                                 {
@@ -758,11 +793,21 @@ namespace Server_Scientia
                 return false;
         }
 
+        bool CheckAllReadCard(RoomSort.RoomInfo room)
+        {
+            for(int n = 0; n < room._userList.Count; n++)
+            {
+                if (!room._userList[n]._isFinishReadCard)
+                    return false;
+            }
+
+            return true;
+        }
+
         void PickCardRandomly(RoomSort.RoomInfo room, int[] cardArr, int cardCnt)
         {
             Random rd = new Random();
 
-            //TODO 1번 뽑으면 자동으로 2번은 뽑히지 않음
             List<int> normalCard = new List<int>();
             List<int> nonNormalCard = new List<int>();
 
@@ -786,9 +831,14 @@ namespace Server_Scientia
                         && cardArr[selectIndex] != 0);
 
                 room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(selectIndex, CardData.Index.Field.ToString())].Add(selectIndex);
+
+                if (normalCard.Contains(selectIndex))
+                    normalCard.Remove(selectIndex);
+
+                RemoveLinkCard(selectIndex, normalCard);
             }
 
-            while(room._cardInfo.IsReady())
+            while(room._cardInfo.IsOver())
             {
                 do
                 {
@@ -799,6 +849,11 @@ namespace Server_Scientia
                         && cardArr[selectIndex] != 0);
 
                 room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(selectIndex, CardData.Index.Field.ToString())].Add(selectIndex);
+
+                if (nonNormalCard.Contains(selectIndex))
+                    nonNormalCard.Remove(selectIndex);
+
+                RemoveLinkCard(selectIndex, nonNormalCard);
             }
 
             DefinedStructure.P_PickedCard pPickedCard;
@@ -820,6 +875,28 @@ namespace Server_Scientia
                     _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowPickedCard, pPickedCard, room._userList[n]._UUID));
                 }
             }
+        }
+
+        void RemoveLinkCard(int selectedIndex, List<int> card)
+        {
+            int temp = selectedIndex / 2;
+
+            if(temp == 0)
+            {
+                if (card.Contains(selectedIndex - 1))
+                    card.Remove(selectedIndex - 1);
+            }
+            else
+            {
+                if(card.Contains(selectedIndex + 1))
+                    card.Remove(selectedIndex + 1);
+            }
+        }
+
+        void PickCard()
+        {
+            // last order form master ==> index - 1
+            // Send Packet, cardPick, int index
         }
 
         public void MainLoop()

@@ -23,6 +23,7 @@ namespace Server_Scientia
             TryEnterRoom,
             InformReady,
             InformGameStart,
+            FinishReadCard,
 
             ConnectionTerminate,
 
@@ -48,6 +49,7 @@ namespace Server_Scientia
             CannotPlay,
             GameStart,
             ShowPickedCard,
+            PickCard,
 
             max
         }

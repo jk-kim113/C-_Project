@@ -211,6 +211,13 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
             public int[] _pickedCardArr;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ThisTurn
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+        }
         #endregion
 
         #region FromServer

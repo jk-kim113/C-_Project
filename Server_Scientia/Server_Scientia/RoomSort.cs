@@ -16,12 +16,13 @@ namespace Server_Scientia
             public string _pw;
             public string _mode;
             public string _rule;
-            public string _master;
+            public int _master;
 
             public List<UserInfo> _userList;
             public int _currentMemberCnt;
 
             public CardInfo _cardInfo;
+            public int _thisTurn;
 
             public int EmptyIndex()
             {
@@ -43,13 +44,14 @@ namespace Server_Scientia
             public int _level;
             public bool _isEmpty;
             public bool _isReady;
+            public bool _isFinishReadCard;
         }
 
         public class CardInfo
         {
             public Dictionary<eCardField, List<int>> _cardGroup = new Dictionary<eCardField, List<int>>();
 
-            public bool IsReady()
+            public bool IsOver()
             {
                 foreach(eCardField key in _cardGroup.Keys)
                 {
