@@ -19,6 +19,7 @@ namespace Server_Scientia
             public string _master;
 
             public List<UserInfo> _userList;
+            public int _currentMemberCnt;
 
             public CardInfo _cardInfo;
 
@@ -46,11 +47,11 @@ namespace Server_Scientia
 
         public class CardInfo
         {
-            public Dictionary<string, List<int>> _cardGroup;
+            public Dictionary<eCardField, List<int>> _cardGroup = new Dictionary<eCardField, List<int>>();
 
             public bool IsReady()
             {
-                foreach(string key in _cardGroup.Keys)
+                foreach(eCardField key in _cardGroup.Keys)
                 {
                     if (_cardGroup[key].Count != 3)
                         return false;

@@ -9,6 +9,22 @@ using System.Threading;
 
 namespace Server_Scientia
 {
+    public enum eCardKind
+    {
+        Abnormal,
+        Normal
+    }
+
+    public enum eCardField
+    {
+        Physics,
+        Chemistry,
+        Biology,
+        Astronomy,
+
+        max
+    }
+
     class MainServer
     {
         const short _port = 80;
@@ -35,10 +51,13 @@ namespace Server_Scientia
         Thread _tFromServer;
         Thread _tToServer;
 
+        TableManager _tbMgr = new TableManager();
+
         int[] _startCardArr = new int[] { 2, 3, 5, 13, 16, 17, 25, 27, 29, 37, 39, 41 };
 
         public MainServer()
         {
+            _tbMgr.LoadAll();
             CreateServer();
         }
 
@@ -257,6 +276,7 @@ namespace Server_Scientia
                                     break;
                                 #endregion
 
+                                #region Room
                                 case DefinedProtocol.eFromClient.CreateRoom:
 
                                     DefinedStructure.P_CreateRoom pCreateRoom = new DefinedStructure.P_CreateRoom();
@@ -271,15 +291,15 @@ namespace Server_Scientia
                                     roomInfo._rule = pCreateRoom._rule;
                                     roomInfo._master = pCreateRoom._nickName;
                                     roomInfo._userList = new List<RoomSort.UserInfo>();
+                                    roomInfo._currentMemberCnt = 0;
 
-                                    for(int n = 0; n < 4; n++)
+                                    for (int n = 0; n < 4; n++)
                                     {
                                         RoomSort.UserInfo userInfo = new RoomSort.UserInfo();
                                         userInfo._isEmpty = true;
                                         roomInfo._userList.Add(userInfo);
                                     }
 
-                                    roomInfo._userList[0]._isReady = true;
                                     _roomInfoSort.CreateRoom(pCreateRoom._mode, roomInfo);
 
                                     GetBattleInfo(roomInfo._roomNumber, packet._UUID, pCreateRoom._nickName);
@@ -296,7 +316,7 @@ namespace Server_Scientia
                                             pRoomInfo._roomNumber = _roomInfoSort._RoomList[key][n]._roomNumber;
                                             pRoomInfo._name = _roomInfoSort._RoomList[key][n]._name;
                                             pRoomInfo._isLock = _roomInfoSort._RoomList[key][n]._isLock ? 0 : 1;
-                                            pRoomInfo._currentMemberCnt = _roomInfoSort._RoomList[key][n]._userList.Count;
+                                            pRoomInfo._currentMemberCnt = _roomInfoSort._RoomList[key][n]._currentMemberCnt;
                                             pRoomInfo._maxMemberCnt = 4;
                                             pRoomInfo._mode = _roomInfoSort._RoomList[key][n]._mode;
                                             pRoomInfo._rule = _roomInfoSort._RoomList[key][n]._rule;
@@ -319,6 +339,7 @@ namespace Server_Scientia
                                     GetBattleInfo(pTryEnterRoom._roomNumber, packet._UUID, pTryEnterRoom._nickName);
 
                                     break;
+                                #endregion
 
                                 case DefinedProtocol.eFromClient.InformReady:
 
@@ -368,13 +389,11 @@ namespace Server_Scientia
                                         }
 
                                         RoomSort.CardInfo cardInfo = new RoomSort.CardInfo();
-                                        cardInfo._cardGroup.Add("Physics", new List<int>());
-                                        cardInfo._cardGroup.Add("Chemistry", new List<int>());
-                                        cardInfo._cardGroup.Add("Biology", new List<int>());
-                                        cardInfo._cardGroup.Add("Astronomy", new List<int>());
+                                        for(int n = 0; n < (int)eCardField.max; n++)
+                                            cardInfo._cardGroup.Add((eCardField)n, new List<int>());
 
                                         roomStart._cardInfo = cardInfo;
-
+                                        Console.WriteLine(roomStart._mode);
                                         switch (roomStart._mode)
                                         {
                                             case "나만의_덱":
@@ -383,7 +402,7 @@ namespace Server_Scientia
 
                                             case "랜덤_덱":
                                             case "모두의_덱":
-
+                                                
                                                 DefinedStructure.P_GetAllCard pGetAllCard;
                                                 pGetAllCard._roomNumber = roomStart._roomNumber;
                                                 pGetAllCard._nickNameArr = string.Empty;
@@ -630,10 +649,18 @@ namespace Server_Scientia
                                 userInfo._nickName = pShowBattleInfo._nickName;
                                 userInfo._level = pShowBattleInfo._accountlevel;
                                 userInfo._isEmpty = false;
-                                userInfo._isReady = false;
+                                userInfo._isReady = room._master == pShowBattleInfo._nickName;
 
-                                room._userList.Add(userInfo);
-
+                                for (int n = 0; n < room._userList.Count; n++)
+                                {
+                                    if(room._userList[n]._isEmpty)
+                                    {
+                                        room._userList[n] = userInfo;
+                                        room._currentMemberCnt++;
+                                        break;
+                                    }
+                                }
+                                
                                 for(int n = 0; n < room._userList.Count; n++)
                                 {
                                     if(!room._userList[n]._isEmpty)
@@ -713,15 +740,22 @@ namespace Server_Scientia
 
         bool CheckAllReady(RoomSort.RoomInfo room)
         {
+            int cnt = 0;
             for (int n = 0; n < room._userList.Count; n++)
             {
-                if (!room._userList[n]._isReady)
+                if (room._userList[n]._isReady)
                 {
-                    return false;
+                    cnt++;
                 }
             }
 
-            return true;
+            if (cnt == 1)
+                return false;
+
+            if (room._currentMemberCnt == cnt)
+                return true;
+            else
+                return false;
         }
 
         void PickCardRandomly(RoomSort.RoomInfo room, int[] cardArr, int cardCnt)
@@ -734,7 +768,7 @@ namespace Server_Scientia
 
             for(int n = 0; n < cardCnt; n++)
             {
-                if (cardArr[n] == 0)
+                if (_tbMgr.Get(eTableType.CardData).ToI(cardArr[n], CardData.Index.Field.ToString()) == (int)eCardKind.Normal)
                     normalCard.Add(cardArr[n]);
                 else
                     nonNormalCard.Add(cardArr[n]);
@@ -748,9 +782,10 @@ namespace Server_Scientia
                 {
                     selectIndex = rd.Next(0, normalCard.Count);
                 }
-                while (room._cardInfo._cardGroup["Physics"].Contains(cardArr[selectIndex]) && cardArr[selectIndex] != 0);
+                while (room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(selectIndex, CardData.Index.Field.ToString())].Contains(cardArr[selectIndex]) 
+                        && cardArr[selectIndex] != 0);
 
-                room._cardInfo._cardGroup["Physics"].Add(selectIndex);
+                room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(selectIndex, CardData.Index.Field.ToString())].Add(selectIndex);
             }
 
             while(room._cardInfo.IsReady())
@@ -759,19 +794,22 @@ namespace Server_Scientia
                 {
                     selectIndex = rd.Next(0, nonNormalCard.Count);
                 }
-                while (room._cardInfo._cardGroup["Physics"].Contains(cardArr[selectIndex]) && room._cardInfo._cardGroup["Physics"].Count < 3 && cardArr[selectIndex] != 0);
+                while (room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(selectIndex, CardData.Index.Field.ToString())].Contains(cardArr[selectIndex]) 
+                        && room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(selectIndex, CardData.Index.Field.ToString())].Count < 3 
+                        && cardArr[selectIndex] != 0);
 
-                room._cardInfo._cardGroup["Physics"].Add(selectIndex);
+                room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(selectIndex, CardData.Index.Field.ToString())].Add(selectIndex);
             }
 
             DefinedStructure.P_PickedCard pPickedCard;
             pPickedCard._pickedCardArr = new int[12];
             int packIdx = 0;
-            foreach(string key in room._cardInfo._cardGroup.Keys)
+            foreach(eCardField key in room._cardInfo._cardGroup.Keys)
             {
                 for(int n = 0; n < room._cardInfo._cardGroup[key].Count; n++)
                 {
                     pPickedCard._pickedCardArr[packIdx++] = room._cardInfo._cardGroup[key][n];
+                    Console.WriteLine(room._cardInfo._cardGroup[key][n]);
                 }
             }
 
