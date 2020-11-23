@@ -535,14 +535,24 @@ namespace DB_Scientia
 
         public void SearchAllCard(string nickNameArr, List<int> allCard)
         {
-            string[] nickName = new string[4];
-            Array.Copy(nickNameArr.Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries), nickName, 4);
+            string[] nickName = nickNameArr.Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+            string searchQuery = string.Empty;
+            string inputStr = string.Empty;
+
+            for (int n = 0; n < nickName.Length; n++)
+            {
+                inputStr += string.Format("'{0}'", nickName[n]);
+
+                if (n + 1 < nickName.Length)
+                    inputStr += ",";
+            }
+
+            searchQuery = string.Format("SELECT DISTINCT CardIndex FROM cardreleaseinfo WHERE NickName IN ({0});", inputStr);
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 connection.Open();
-
-                string searchQuery = string.Format("SELECT DISTINCT CardIndex FROM cardreleaseinfo WHERE NickName IN ('{0}','{1}','{2}','{3}';", nickName);
 
                 try
                 {

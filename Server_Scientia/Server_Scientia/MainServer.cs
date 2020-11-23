@@ -392,16 +392,18 @@ namespace Server_Scientia
                                         for(int n = 0; n < (int)eCardField.max; n++)
                                             cardInfo._cardGroup.Add((eCardField)n, new List<int>());
 
+                                        Console.WriteLine("Before switch" + roomStart._mode);
+
                                         roomStart._cardInfo = cardInfo;
                                         switch (roomStart._mode)
                                         {
-                                            case "나만의_덱":
+                                            case "MyDeck":
 
                                                 break;
 
-                                            case "랜덤_덱":
-                                            case "모두의_덱":
-                                                
+                                            case "RandomDeck":
+                                            case "AllDeck":
+                                                Console.WriteLine("After switch" + roomStart._mode);
                                                 DefinedStructure.P_GetAllCard pGetAllCard;
                                                 pGetAllCard._roomNumber = roomStart._roomNumber;
                                                 pGetAllCard._nickNameArr = string.Empty;
@@ -413,7 +415,7 @@ namespace Server_Scientia
 
                                                 break;
 
-                                            case "AI대전":
+                                            case "AI":
 
                                                 break;
                                         }
@@ -739,13 +741,13 @@ namespace Server_Scientia
 
                                 switch(roomToBattle._mode)
                                 {
-                                    case "랜덤_덱":
+                                    case "RandomDeck":
 
                                         PickCardRandomly(roomToBattle, pShowAllCard._cardArr, pShowAllCard._cardCount);
 
                                         break;
 
-                                    case "모두의_덱":
+                                    case "AllDeck":
                                         break;
                                 }
 
@@ -795,13 +797,17 @@ namespace Server_Scientia
 
         bool CheckAllReadCard(RoomSort.RoomInfo room)
         {
-            for(int n = 0; n < room._userList.Count; n++)
+            int cnt = 0;
+            for (int n = 0; n < room._userList.Count; n++)
             {
-                if (!room._userList[n]._isFinishReadCard)
-                    return false;
+                if (room._userList[n]._isFinishReadCard)
+                    cnt++;
             }
 
-            return true;
+            if (room._currentMemberCnt == cnt)
+                return true;
+            else
+                return false;
         }
 
         void PickCardRandomly(RoomSort.RoomInfo room, int[] cardArr, int cardCnt)
@@ -813,7 +819,7 @@ namespace Server_Scientia
 
             for(int n = 0; n < cardCnt; n++)
             {
-                if (_tbMgr.Get(eTableType.CardData).ToI(cardArr[n], CardData.Index.Field.ToString()) == (int)eCardKind.Normal)
+                if (_tbMgr.Get(eTableType.CardData).ToI(cardArr[n], CardData.Index.Kind.ToString()) == (int)eCardKind.Normal)
                     normalCard.Add(cardArr[n]);
                 else
                     nonNormalCard.Add(cardArr[n]);
@@ -827,33 +833,33 @@ namespace Server_Scientia
                 {
                     selectIndex = rd.Next(0, normalCard.Count);
                 }
-                while (room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(selectIndex, CardData.Index.Field.ToString())].Contains(cardArr[selectIndex]) 
-                        && cardArr[selectIndex] != 0);
+                while (room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(normalCard[selectIndex], CardData.Index.Field.ToString())].Contains(normalCard[selectIndex]) 
+                        || cardArr[selectIndex] == 0);
 
-                room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(selectIndex, CardData.Index.Field.ToString())].Add(selectIndex);
+                room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(normalCard[selectIndex], CardData.Index.Field.ToString())].Add(normalCard[selectIndex]);
 
-                if (normalCard.Contains(selectIndex))
-                    normalCard.Remove(selectIndex);
+                RemoveLinkCard(normalCard[selectIndex], normalCard);
 
-                RemoveLinkCard(selectIndex, normalCard);
+                if (normalCard.Contains(normalCard[selectIndex]))
+                    normalCard.Remove(normalCard[selectIndex]);
             }
 
-            while(room._cardInfo.IsOver())
+            while(!room._cardInfo.IsOver())
             {
                 do
                 {
                     selectIndex = rd.Next(0, nonNormalCard.Count);
                 }
-                while (room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(selectIndex, CardData.Index.Field.ToString())].Contains(cardArr[selectIndex]) 
-                        && room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(selectIndex, CardData.Index.Field.ToString())].Count < 3 
-                        && cardArr[selectIndex] != 0);
+                while (room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(nonNormalCard[selectIndex], CardData.Index.Field.ToString())].Contains(nonNormalCard[selectIndex]) 
+                        || room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(nonNormalCard[selectIndex], CardData.Index.Field.ToString())].Count >= 3 
+                        || nonNormalCard[selectIndex] == 0);
 
-                room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(selectIndex, CardData.Index.Field.ToString())].Add(selectIndex);
+                room._cardInfo._cardGroup[(eCardField)_tbMgr.Get(eTableType.CardData).ToI(nonNormalCard[selectIndex], CardData.Index.Field.ToString())].Add(nonNormalCard[selectIndex]);
 
-                if (nonNormalCard.Contains(selectIndex))
-                    nonNormalCard.Remove(selectIndex);
+                RemoveLinkCard(nonNormalCard[selectIndex], nonNormalCard);
 
-                RemoveLinkCard(selectIndex, nonNormalCard);
+                if (nonNormalCard.Contains(nonNormalCard[selectIndex]))
+                    nonNormalCard.Remove(nonNormalCard[selectIndex]);
             }
 
             DefinedStructure.P_PickedCard pPickedCard;
@@ -879,7 +885,7 @@ namespace Server_Scientia
 
         void RemoveLinkCard(int selectedIndex, List<int> card)
         {
-            int temp = selectedIndex / 2;
+            int temp = selectedIndex % 2;
 
             if(temp == 0)
             {

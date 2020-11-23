@@ -439,7 +439,8 @@ namespace DB_Scientia
             pShowAllCard._roomNum = roomNum;
             pShowAllCard._cardCount = allcard.Count;
             pShowAllCard._cardArr = new int[48];
-            Array.Copy(allcard.ToArray(), pShowAllCard._cardArr, 48);
+            for (int n = 0; n < allcard.Count; n++)
+                pShowAllCard._cardArr[n] = allcard[n];
 
             ToPacket(DefinedProtocol.eToServer.ShowAllCard, pShowAllCard);
         }
