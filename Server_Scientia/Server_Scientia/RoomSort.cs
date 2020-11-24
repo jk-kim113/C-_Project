@@ -45,6 +45,38 @@ namespace Server_Scientia
             public bool _isEmpty;
             public bool _isReady;
             public bool _isFinishReadCard;
+
+            public int[] _pickedCardArr;
+
+            public bool IsEmptyCardSlot()
+            {
+                for(int n = 0; n < _pickedCardArr.Length; n++)
+                {
+                    if (_pickedCardArr[n] == 0)
+                        return true;
+                }
+
+                return false;
+            }
+
+            public int AddCard(int cardIndex)
+            {
+                int emptySlot = EmptyCardSlotIndex();
+                _pickedCardArr[emptySlot] = cardIndex;
+
+                return emptySlot;
+            }
+
+            int EmptyCardSlotIndex()
+            {
+                for (int n = 0; n < _pickedCardArr.Length; n++)
+                {
+                    if (_pickedCardArr[n] == 0)
+                        return n;
+                }
+
+                return -1;
+            }
         }
 
         public class CardInfo

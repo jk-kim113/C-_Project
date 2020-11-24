@@ -102,6 +102,15 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _roomNumber;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_PickCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _cardIndex;
+        }
         #endregion
 
         #region ToClient
@@ -217,6 +226,17 @@ namespace Server_Scientia
         {
             [MarshalAs(UnmanagedType.I4)]
             public int _index;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowPickCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _cardIndex;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _slotIndex;
         }
         #endregion
 

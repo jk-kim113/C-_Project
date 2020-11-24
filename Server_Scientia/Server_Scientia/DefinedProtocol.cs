@@ -24,6 +24,7 @@ namespace Server_Scientia
             InformReady,
             InformGameStart,
             FinishReadCard,
+            PickCard,
 
             ConnectionTerminate,
 
@@ -50,6 +51,8 @@ namespace Server_Scientia
             GameStart,
             ShowPickedCard,
             PickCard,
+            ShowPickCard,
+            ChooseAction,
 
             max
         }
