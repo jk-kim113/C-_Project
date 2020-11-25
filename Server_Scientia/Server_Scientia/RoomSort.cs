@@ -34,6 +34,17 @@ namespace Server_Scientia
 
                 return -1;
             }
+
+            public UserInfo SearchUser(long uuid)
+            {
+                for(int n = 0; n < _userList.Count; n++)
+                {
+                    if (_userList[n]._UUID == uuid)
+                        return _userList[n];
+                }
+
+                return null;
+            }
         }
 
         public class UserInfo
@@ -47,10 +58,12 @@ namespace Server_Scientia
             public bool _isFinishReadCard;
 
             public int[] _pickedCardArr;
+            public int _unLockSlotCnt;
+            public int[] _rotateInfoArr;
 
             public bool IsEmptyCardSlot()
             {
-                for(int n = 0; n < _pickedCardArr.Length; n++)
+                for(int n = 0; n < _unLockSlotCnt; n++)
                 {
                     if (_pickedCardArr[n] == 0)
                         return true;
@@ -59,23 +72,43 @@ namespace Server_Scientia
                 return false;
             }
 
+            public int _nowCardCount 
+            { 
+                get 
+                {
+                    int cnt = 0;
+                    for(int n = 0; n < _unLockSlotCnt; n++)
+                    {
+                        if (_pickedCardArr[n] != 0)
+                            cnt++;
+                    }
+
+                    return cnt;
+                } 
+            }
+
             public int AddCard(int cardIndex)
             {
-                int emptySlot = EmptyCardSlotIndex();
-                _pickedCardArr[emptySlot] = cardIndex;
+                int emptySlot = -1;
+                if(EmptyCardSlotIndex(out emptySlot))
+                    _pickedCardArr[emptySlot] = cardIndex;
 
                 return emptySlot;
             }
 
-            int EmptyCardSlotIndex()
+            bool EmptyCardSlotIndex(out int index)
             {
-                for (int n = 0; n < _pickedCardArr.Length; n++)
+                index = -1;
+                for (int n = 0; n < _unLockSlotCnt; n++)
                 {
                     if (_pickedCardArr[n] == 0)
-                        return n;
+                    {
+                        index = n;
+                        return true;
+                    }   
                 }
 
-                return -1;
+                return false;
             }
         }
 
@@ -88,6 +121,17 @@ namespace Server_Scientia
                 foreach(eCardField key in _cardGroup.Keys)
                 {
                     if (_cardGroup[key].Count != 3)
+                        return false;
+                }
+
+                return true;
+            }
+
+            public bool IsEmpty()
+            {
+                foreach (eCardField key in _cardGroup.Keys)
+                {
+                    if (_cardGroup[key].Count != 0)
                         return false;
                 }
 

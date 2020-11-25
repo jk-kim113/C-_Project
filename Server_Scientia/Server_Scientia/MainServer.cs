@@ -341,6 +341,7 @@ namespace Server_Scientia
                                     break;
                                 #endregion
 
+                                #region Game Ready
                                 case DefinedProtocol.eFromClient.InformReady:
 
                                     DefinedStructure.P_InformRoomInfo pInformReady = new DefinedStructure.P_InformRoomInfo();
@@ -498,6 +499,8 @@ namespace Server_Scientia
 
                                                 if(roomPickCard._userList[roomPickCard._master]._UUID == packet._UUID)
                                                 {
+                                                    roomPickCard._thisTurn = roomPickCard._master;
+
                                                     DefinedStructure.P_ThisTurn pGameTurn;
                                                     pGameTurn._index = roomPickCard._master;
 
@@ -538,6 +541,163 @@ namespace Server_Scientia
                                             break;
                                         }
                                     }
+
+                                    break;
+                                #endregion
+
+                                case DefinedProtocol.eFromClient.SelectAction:
+
+                                    DefinedStructure.P_SelectAction pSelectAction = new DefinedStructure.P_SelectAction();
+                                    pSelectAction = (DefinedStructure.P_SelectAction)packet.Convert(pSelectAction.GetType());
+
+                                    RoomSort.RoomInfo roomSelectAction = _roomInfoSort.GetRoom(pSelectAction._roomNumber);
+
+                                    switch (pSelectAction._selectType)
+                                    {
+                                        case 0:
+
+                                            if(!roomSelectAction._cardInfo.IsEmpty())
+                                            {
+                                                RoomSort.UserInfo userGetCard = roomSelectAction.SearchUser(packet._UUID);
+
+                                                if(userGetCard.IsEmptyCardSlot())
+                                                {
+                                                    DefinedStructure.P_GetCard pGetCard;
+                                                    pGetCard._index = userGetCard._index;
+
+                                                    for (int m = 0; m < roomSelectAction._userList.Count; m++)
+                                                    {
+                                                        if (!roomSelectAction._userList[m]._isEmpty)
+                                                        {
+                                                            _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.GetCard, pGetCard, roomSelectAction._userList[m]._UUID));
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    //TODO Send Packet SystemMessage no card slot
+                                                }
+                                            }
+                                            else
+                                            {
+                                                //TODO Send Packet SystemMessage no card
+                                            }
+
+                                            break;
+
+                                        case 1:
+
+                                            RoomSort.UserInfo userRotateCard = roomSelectAction.SearchUser(packet._UUID);
+
+                                            if(userRotateCard._nowCardCount > 0)
+                                            {
+                                                DefinedStructure.P_InformRotateCard pInformRotateCard;
+                                                pInformRotateCard._index = userRotateCard._index;
+                                                pInformRotateCard._cardArr = new int[4];
+                                                pInformRotateCard._turnCount = 2;
+
+                                                for (int n = 0; n < userRotateCard._pickedCardArr.Length; n++)
+                                                {
+                                                    if(n < userRotateCard._nowCardCount)
+                                                    {
+                                                        if(userRotateCard._pickedCardArr[n] == 0)
+                                                            pInformRotateCard._cardArr[n] = 0;
+                                                        else
+                                                            pInformRotateCard._cardArr[n] = userRotateCard._pickedCardArr[n];
+                                                    }
+                                                    else
+                                                        pInformRotateCard._cardArr[n] = -1;
+                                                }
+
+                                                for (int m = 0; m < roomSelectAction._userList.Count; m++)
+                                                {
+                                                    if (!roomSelectAction._userList[m]._isEmpty)
+                                                    {
+                                                        _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.RotateCard, pInformRotateCard, roomSelectAction._userList[m]._UUID));
+                                                    }
+                                                }
+                                            }
+                                            else
+                                            {
+                                                //TODO Send Packet SystemMessage no rotatable card
+                                            }
+
+                                            break;
+                                    }
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.PickCardInProgress:
+
+                                    DefinedStructure.P_PickCard pPickCardInProgress = new DefinedStructure.P_PickCard();
+                                    pPickCardInProgress = (DefinedStructure.P_PickCard)packet.Convert(pPickCardInProgress.GetType());
+
+                                    RoomSort.RoomInfo roomPickCardInProgress = _roomInfoSort.GetRoom(pPickCardInProgress._roomNumber);
+                                    RoomSort.UserInfo userPickCardInProgress = roomPickCardInProgress.SearchUser(packet._UUID);
+
+                                    DefinedStructure.P_ShowPickCard pShowPickCardInPregress;
+                                    pShowPickCardInPregress._index = userPickCardInProgress._index;
+                                    pShowPickCardInPregress._cardIndex = pPickCardInProgress._cardIndex;
+                                    pShowPickCardInPregress._slotIndex = userPickCardInProgress.AddCard(pPickCardInProgress._cardIndex);
+
+                                    for (int m = 0; m < roomPickCardInProgress._userList.Count; m++)
+                                    {
+                                        if (!roomPickCardInProgress._userList[m]._isEmpty)
+                                        {
+                                            _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowPickCard, pShowPickCardInPregress, roomPickCardInProgress._userList[m]._UUID));
+                                        }
+                                    }
+
+                                    if (++roomPickCardInProgress._thisTurn >= roomPickCardInProgress._userList.Count)
+                                        roomPickCardInProgress._thisTurn = 0;
+
+                                    while (roomPickCardInProgress._userList[roomPickCardInProgress._thisTurn]._isEmpty)
+                                    {
+                                        roomPickCardInProgress._thisTurn++;
+
+                                        if (++roomPickCardInProgress._thisTurn >= roomPickCardInProgress._userList.Count)
+                                            roomPickCardInProgress._thisTurn = 0;
+                                    }
+
+                                    DefinedStructure.P_ThisTurn pChooseAction;
+                                    pChooseAction._index = roomPickCardInProgress._master;
+
+                                    for (int m = 0; m < roomPickCardInProgress._userList.Count; m++)
+                                    {
+                                        if (!roomPickCardInProgress._userList[m]._isEmpty)
+                                        {
+                                            _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ChooseAction, pChooseAction, roomPickCardInProgress._userList[m]._UUID));
+                                        }
+                                    }
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.RotateInfo:
+
+                                    DefinedStructure.P_RotateInfo pRotateInfo = new DefinedStructure.P_RotateInfo();
+                                    pRotateInfo = (DefinedStructure.P_RotateInfo)packet.Convert(pRotateInfo.GetType());
+
+                                    RoomSort.RoomInfo roomRotateInfo = _roomInfoSort.GetRoom(pRotateInfo._roomNumber);
+
+                                    DefinedStructure.P_ShowRotateInfo pShowRotateInfo;
+                                    pShowRotateInfo._index = pRotateInfo._index;
+                                    pShowRotateInfo._rotateValue = pRotateInfo._rotateValue;
+
+                                    for (int m = 0; m < roomRotateInfo._userList.Count; m++)
+                                    {
+                                        if (!roomRotateInfo._userList[m]._isEmpty)
+                                        {
+                                            _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowRotateInfo, pShowRotateInfo, roomRotateInfo._userList[m]._UUID));
+                                        }
+                                    }
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.FinishRotate:
+
+                                    //TODO Finish Rotate
+
+                                    DefinedStructure.P_FinishRotate pFinishRotate = new DefinedStructure.P_FinishRotate();
 
                                     break;
 
@@ -765,6 +925,8 @@ namespace Server_Scientia
                                 userInfo._isEmpty = false;
                                 userInfo._isReady = room._master == userInfo._index;
                                 userInfo._pickedCardArr = new int[4];
+                                userInfo._unLockSlotCnt = 2;
+                                userInfo._rotateInfoArr = new int[userInfo._pickedCardArr.Length];
 
                                 for (int n = 0; n < room._userList.Count; n++)
                                 {

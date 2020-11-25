@@ -111,6 +111,35 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _cardIndex;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_SelectAction
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _selectType;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_RotateInfo
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+            [MarshalAs(UnmanagedType.I4)]
+            public float _rotateValue;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_FinishRotate
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+            public int[] _rotateCardInfoArr;
+        }
         #endregion
 
         #region ToClient
@@ -237,6 +266,33 @@ namespace Server_Scientia
             public int _cardIndex;
             [MarshalAs(UnmanagedType.I4)]
             public int _slotIndex;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_GetCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_InformRotateCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+            public int[] _cardArr;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _turnCount;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowRotateInfo
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+            [MarshalAs(UnmanagedType.I4)]
+            public float _rotateValue;
         }
         #endregion
 
