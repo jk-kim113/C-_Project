@@ -446,7 +446,15 @@ namespace Server_Scientia
                                     {
                                         roomFinishReadCard._thisTurn = roomFinishReadCard._master - 1;
                                         if (roomFinishReadCard._thisTurn < 0)
-                                            roomFinishReadCard._thisTurn = roomFinishReadCard._currentMemberCnt - 1;
+                                            roomFinishReadCard._thisTurn = roomFinishReadCard._userList.Count - 1;
+
+                                        while(roomFinishReadCard._userList[roomFinishReadCard._thisTurn]._isEmpty)
+                                        {
+                                            roomFinishReadCard._thisTurn--;
+
+                                            if (roomFinishReadCard._thisTurn < 0)
+                                                roomFinishReadCard._thisTurn = roomFinishReadCard._userList.Count - 1;
+                                        }
 
                                         DefinedStructure.P_ThisTurn pPickCardState;
                                         pPickCardState._index = roomFinishReadCard._thisTurn;
@@ -488,10 +496,10 @@ namespace Server_Scientia
                                                     }
                                                 }
 
-                                                if(--roomPickCard._thisTurn == roomPickCard._master)
+                                                if(roomPickCard._userList[roomPickCard._master]._UUID == packet._UUID)
                                                 {
                                                     DefinedStructure.P_ThisTurn pGameTurn;
-                                                    pGameTurn._index = roomPickCard._thisTurn;
+                                                    pGameTurn._index = roomPickCard._master;
 
                                                     for (int m = 0; m < roomPickCard._userList.Count; m++)
                                                     {
@@ -501,10 +509,19 @@ namespace Server_Scientia
                                                         }
                                                     }
                                                 }
-                                                else if (roomPickCard._thisTurn < 0)
+                                                else
                                                 {
-                                                    roomPickCard._thisTurn = roomPickCard._currentMemberCnt - 1;
-                                                    
+                                                    if (--roomPickCard._thisTurn < 0)
+                                                        roomPickCard._thisTurn = roomPickCard._userList.Count - 1;
+
+                                                    while (roomPickCard._userList[roomPickCard._thisTurn]._isEmpty)
+                                                    {
+                                                        roomPickCard._thisTurn--;
+
+                                                        if (roomPickCard._thisTurn < 0)
+                                                            roomPickCard._thisTurn = roomPickCard._userList.Count - 1;
+                                                    }
+
                                                     DefinedStructure.P_ThisTurn pPickCardState;
                                                     pPickCardState._index = roomPickCard._thisTurn;
 
@@ -515,7 +532,7 @@ namespace Server_Scientia
                                                             _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.PickCard, pPickCardState, roomPickCard._userList[m]._UUID));
                                                         }
                                                     }
-                                                }   
+                                                }
                                             }   
 
                                             break;
@@ -781,7 +798,7 @@ namespace Server_Scientia
                                 }
 
                                 DefinedStructure.P_MasterInfo pMasterInfo;
-                                pMasterInfo._masterName = room._userList[room._master]._nickName;
+                                pMasterInfo._masterIndex = room._master;
 
                                 for (int n = 0; n < room._userList.Count; n++)
                                 {
@@ -931,7 +948,6 @@ namespace Server_Scientia
                 for(int n = 0; n < room._cardInfo._cardGroup[key].Count; n++)
                 {
                     pPickedCard._pickedCardArr[packIdx++] = room._cardInfo._cardGroup[key][n];
-                    Console.WriteLine(room._cardInfo._cardGroup[key][n]);
                 }
             }
 

@@ -201,8 +201,8 @@ namespace Server_Scientia
         [StructLayout(LayoutKind.Sequential)]
         public struct P_MasterInfo
         {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
-            public string _masterName;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _masterIndex;
         }
 
         [StructLayout(LayoutKind.Sequential)]
