@@ -144,6 +144,15 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
             public int[] _rotateCardInfoArr;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ChooseCompleteCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+        }
         #endregion
 
         #region ToClient
@@ -299,6 +308,15 @@ namespace Server_Scientia
             public float _rotateValue;
             [MarshalAs(UnmanagedType.I4)]
             public int _restCount;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_SelectCompleteCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+            public int[] _cardArr;
         }
         #endregion
 

@@ -34,7 +34,7 @@ namespace Server_Scientia
             {
                 for(int n = 0; n < _roomInfoDic[key].Count; n++)
                 {
-                    if (_roomInfoDic[key][n]._roomNumber == roomNum)
+                    if (_roomInfoDic[key][n]._RoomNumber == roomNum)
                         return _roomInfoDic[key][n];
                 }
             }
@@ -63,10 +63,10 @@ namespace Server_Scientia
             while(root < max)
             {
                 int child = root * 2 + 1;
-                if (child + 1 < max && _roomInfoDic[mode][child]._userList.Count > _roomInfoDic[mode][child + 1]._userList.Count)
+                if (child + 1 < max && _roomInfoDic[mode][child]._NowMemeberCnt > _roomInfoDic[mode][child + 1]._NowMemeberCnt)
                     ++child;
 
-                if (child < max && _roomInfoDic[mode][root]._userList.Count > _roomInfoDic[mode][child]._userList.Count)
+                if (child < max && _roomInfoDic[mode][root]._NowMemeberCnt > _roomInfoDic[mode][child]._NowMemeberCnt)
                 {
                     RoomInfo temp = _roomInfoDic[mode][root];
                     _roomInfoDic[mode][root] = _roomInfoDic[mode][child];

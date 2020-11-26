@@ -29,6 +29,7 @@ namespace Server_Scientia
             PickCardInProgress,
             RotateInfo,
             FinishRotate,
+            ChooseCompleteCard,
 
             ConnectionTerminate,
 
@@ -60,6 +61,7 @@ namespace Server_Scientia
             GetCard,
             RotateCard,
             ShowRotateInfo,
+            SelectCompleteCard,
 
             max
         }

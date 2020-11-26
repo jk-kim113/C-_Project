@@ -8,37 +8,72 @@ namespace Server_Scientia
 {
     class RoomInfo
     {
-        public int _roomNumber;
-        public string _name;
-        public bool _isLock;
-        public string _pw;
-        public string _mode;
-        public string _rule;
-        public int _master;
+        int _roomNumber;
+        string _name;
+        bool _isLock;
+        string _pw;
+        string _mode;
+        string _rule;
+        int _master;
+        bool _isPlay;
+        
+        public int _RoomNumber { get { return _roomNumber; } }
+        public string _Name { get { return _name; } }
+        public bool _IsLock { get { return _isLock; } }
+        public string _Mode { get { return _mode; } }
+        public string _Rule { get { return _rule; } }
+        public int _Master { get { return _master; } }
+        public bool _IsPlay { get { return _isPlay; } }
 
-        public List<UserInfo> _userList;
-        public int _currentMemberCnt;
+        const int _userCnt = 4;
 
-        public CardInfo _cardInfo;
-        public int _thisTurn;
+        UserInfo[] _userArr = new UserInfo[_userCnt];
+        int _currentMemberCnt;
+        int _thisTurn;
 
-        public int EmptyIndex()
+        public UserInfo[] _UserArr { get { return _userArr; } }
+        public int _NowMemeberCnt { get { return _currentMemberCnt; } }
+        public int _ThisTurn { get { return _thisTurn; } set { _thisTurn = value; } }
+
+        CardInfo _cardInfo = new CardInfo();
+
+        public CardInfo _CardDeck { get { return _cardInfo; } }
+        public bool _IsCardEmpty { get { return _cardInfo._IsEmpty; } }
+
+        public void InitRoomInfo(int roomNumber, string name, bool isLock, string pw, string mode, string rule)
+        {   
+            _roomNumber = roomNumber;
+            _name = name;
+            _isLock = isLock;
+            _pw = pw;
+            _mode = mode;
+            _rule = rule;
+            _currentMemberCnt = 0;
+            _master = 0;
+
+            _cardInfo.InitCardDeck();
+        }
+
+        public void AddUser(UserInfo user)
         {
-            for (int n = 0; n < _userList.Count; n++)
+            for(int n = 0; n < _userArr.Length; n++)
             {
-                if (_userList[n]._isEmpty)
-                    return n;
+                if (_userArr[n]._IsEmpty)
+                {
+                    _userArr[n] = user;
+                    _userArr[n]._Index = n;
+                    _currentMemberCnt++;
+                    break;
+                }   
             }
-
-            return -1;
         }
 
         public UserInfo SearchUser(long uuid)
         {
-            for (int n = 0; n < _userList.Count; n++)
+            for (int n = 0; n < _userArr.Length; n++)
             {
-                if (_userList[n]._UUID == uuid)
-                    return _userList[n];
+                if (_userArr[n]._UUID == uuid)
+                    return _userArr[n];
             }
 
             return null;
