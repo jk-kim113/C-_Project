@@ -282,7 +282,7 @@ namespace Server_Scientia
                                     DefinedStructure.P_CreateRoom pCreateRoom = new DefinedStructure.P_CreateRoom();
                                     pCreateRoom = (DefinedStructure.P_CreateRoom)packet.Convert(pCreateRoom.GetType());
 
-                                    RoomSort.RoomInfo roomInfo = new RoomSort.RoomInfo();
+                                    RoomInfo roomInfo = new RoomInfo();
                                     roomInfo._roomNumber = _roomNumber++;
                                     roomInfo._name = pCreateRoom._name;
                                     roomInfo._isLock = pCreateRoom._isLock == 0;
@@ -290,12 +290,12 @@ namespace Server_Scientia
                                     roomInfo._mode = pCreateRoom._mode;
                                     roomInfo._rule = pCreateRoom._rule;
                                     roomInfo._master = 0;
-                                    roomInfo._userList = new List<RoomSort.UserInfo>();
+                                    roomInfo._userList = new List<UserInfo>();
                                     roomInfo._currentMemberCnt = 0;
 
                                     for (int n = 0; n < 4; n++)
                                     {
-                                        RoomSort.UserInfo userInfo = new RoomSort.UserInfo();
+                                        UserInfo userInfo = new UserInfo();
                                         userInfo._isEmpty = true;
                                         roomInfo._userList.Add(userInfo);
                                     }
@@ -347,8 +347,8 @@ namespace Server_Scientia
                                     DefinedStructure.P_InformRoomInfo pInformReady = new DefinedStructure.P_InformRoomInfo();
                                     pInformReady = (DefinedStructure.P_InformRoomInfo)packet.Convert(pInformReady.GetType());
 
-                                    RoomSort.RoomInfo roomReady = _roomInfoSort.GetRoom(pInformReady._roomNumber);
-                                    RoomSort.UserInfo user = new RoomSort.UserInfo();
+                                    RoomInfo roomReady = _roomInfoSort.GetRoom(pInformReady._roomNumber);
+                                    UserInfo user = new UserInfo();
                                     for (int n = 0; n < roomReady._userList.Count; n++)
                                     {
                                         if(roomReady._userList[n]._UUID == packet._UUID)
@@ -377,7 +377,7 @@ namespace Server_Scientia
                                     DefinedStructure.P_InformRoomInfo pInformGameStart = new DefinedStructure.P_InformRoomInfo();
                                     pInformGameStart = (DefinedStructure.P_InformRoomInfo)packet.Convert(pInformGameStart.GetType());
 
-                                    RoomSort.RoomInfo roomStart = _roomInfoSort.GetRoom(pInformGameStart._roomNumber);
+                                    RoomInfo roomStart = _roomInfoSort.GetRoom(pInformGameStart._roomNumber);
 
                                     if(CheckAllReady(roomStart))
                                     {
@@ -389,7 +389,7 @@ namespace Server_Scientia
                                             _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.GameStart, pGameStart, roomStart._userList[n]._UUID));
                                         }
 
-                                        RoomSort.CardInfo cardInfo = new RoomSort.CardInfo();
+                                        CardInfo cardInfo = new CardInfo();
                                         for(int n = 0; n < (int)eCardField.max; n++)
                                             cardInfo._cardGroup.Add((eCardField)n, new List<int>());
 
@@ -432,7 +432,7 @@ namespace Server_Scientia
                                     DefinedStructure.P_InformRoomInfo pFinishReadCard = new DefinedStructure.P_InformRoomInfo();
                                     pFinishReadCard = (DefinedStructure.P_InformRoomInfo)packet.Convert(pFinishReadCard.GetType());
 
-                                    RoomSort.RoomInfo roomFinishReadCard = _roomInfoSort.GetRoom(pFinishReadCard._roomNumber);
+                                    RoomInfo roomFinishReadCard = _roomInfoSort.GetRoom(pFinishReadCard._roomNumber);
 
                                     for (int n = 0; n < roomFinishReadCard._userList.Count; n++)
                                     {
@@ -476,7 +476,7 @@ namespace Server_Scientia
                                     DefinedStructure.P_PickCard pPickCard = new DefinedStructure.P_PickCard();
                                     pPickCard = (DefinedStructure.P_PickCard)packet.Convert(pPickCard.GetType());
 
-                                    RoomSort.RoomInfo roomPickCard = _roomInfoSort.GetRoom(pPickCard._roomNumber);
+                                    RoomInfo roomPickCard = _roomInfoSort.GetRoom(pPickCard._roomNumber);
 
                                     for(int n = 0; n < roomPickCard._userList.Count; n++)
                                     {
@@ -550,7 +550,7 @@ namespace Server_Scientia
                                     DefinedStructure.P_SelectAction pSelectAction = new DefinedStructure.P_SelectAction();
                                     pSelectAction = (DefinedStructure.P_SelectAction)packet.Convert(pSelectAction.GetType());
 
-                                    RoomSort.RoomInfo roomSelectAction = _roomInfoSort.GetRoom(pSelectAction._roomNumber);
+                                    RoomInfo roomSelectAction = _roomInfoSort.GetRoom(pSelectAction._roomNumber);
 
                                     switch (pSelectAction._selectType)
                                     {
@@ -558,7 +558,7 @@ namespace Server_Scientia
 
                                             if(!roomSelectAction._cardInfo.IsEmpty())
                                             {
-                                                RoomSort.UserInfo userGetCard = roomSelectAction.SearchUser(packet._UUID);
+                                                UserInfo userGetCard = roomSelectAction.SearchUser(packet._UUID);
 
                                                 if(userGetCard.IsEmptyCardSlot())
                                                 {
@@ -587,7 +587,7 @@ namespace Server_Scientia
 
                                         case 1:
 
-                                            RoomSort.UserInfo userRotateCard = roomSelectAction.SearchUser(packet._UUID);
+                                            UserInfo userRotateCard = roomSelectAction.SearchUser(packet._UUID);
 
                                             if(userRotateCard._nowCardCount > 0)
                                             {
@@ -632,8 +632,8 @@ namespace Server_Scientia
                                     DefinedStructure.P_PickCard pPickCardInProgress = new DefinedStructure.P_PickCard();
                                     pPickCardInProgress = (DefinedStructure.P_PickCard)packet.Convert(pPickCardInProgress.GetType());
 
-                                    RoomSort.RoomInfo roomPickCardInProgress = _roomInfoSort.GetRoom(pPickCardInProgress._roomNumber);
-                                    RoomSort.UserInfo userPickCardInProgress = roomPickCardInProgress.SearchUser(packet._UUID);
+                                    RoomInfo roomPickCardInProgress = _roomInfoSort.GetRoom(pPickCardInProgress._roomNumber);
+                                    UserInfo userPickCardInProgress = roomPickCardInProgress.SearchUser(packet._UUID);
 
                                     DefinedStructure.P_ShowPickCard pShowPickCardInPregress;
                                     pShowPickCardInPregress._index = userPickCardInProgress._index;
@@ -677,11 +677,12 @@ namespace Server_Scientia
                                     DefinedStructure.P_RotateInfo pRotateInfo = new DefinedStructure.P_RotateInfo();
                                     pRotateInfo = (DefinedStructure.P_RotateInfo)packet.Convert(pRotateInfo.GetType());
 
-                                    RoomSort.RoomInfo roomRotateInfo = _roomInfoSort.GetRoom(pRotateInfo._roomNumber);
+                                    RoomInfo roomRotateInfo = _roomInfoSort.GetRoom(pRotateInfo._roomNumber);
 
                                     DefinedStructure.P_ShowRotateInfo pShowRotateInfo;
                                     pShowRotateInfo._index = pRotateInfo._index;
                                     pShowRotateInfo._rotateValue = pRotateInfo._rotateValue;
+                                    pShowRotateInfo._restCount = pRotateInfo._restCount;
 
                                     for (int m = 0; m < roomRotateInfo._userList.Count; m++)
                                     {
@@ -695,9 +696,32 @@ namespace Server_Scientia
 
                                 case DefinedProtocol.eFromClient.FinishRotate:
 
-                                    //TODO Finish Rotate
-
                                     DefinedStructure.P_FinishRotate pFinishRotate = new DefinedStructure.P_FinishRotate();
+                                    pFinishRotate = (DefinedStructure.P_FinishRotate)packet.Convert(pFinishRotate.GetType());
+
+                                    RoomInfo roomFinishRotate = _roomInfoSort.GetRoom(pFinishRotate._roomNumber);
+                                    UserInfo userFinishRotate = roomFinishRotate.SearchUser(packet._UUID);
+                                    for(int n = 0; n < userFinishRotate._rotateInfoArr.Length; n++)
+                                    {
+                                        userFinishRotate._rotateInfoArr[n] += pFinishRotate._rotateCardInfoArr[n];
+                                    }
+
+                                    int completeCount;
+                                    if (userFinishRotate.IsComplete(out completeCount))
+                                    {
+                                        if(completeCount >= 2)
+                                        {
+                                            //TODO Select 
+                                        }
+                                        else
+                                        {
+                                            //TODO Apply Effect
+                                        }
+                                    }
+                                    else
+                                    {
+                                        //TODO Next Turn
+                                    }
 
                                     break;
 
@@ -915,9 +939,9 @@ namespace Server_Scientia
                                 DefinedStructure.P_ShowBattleInfo pShowBattleInfo = new DefinedStructure.P_ShowBattleInfo();
                                 pShowBattleInfo = (DefinedStructure.P_ShowBattleInfo)tData.Convert(pShowBattleInfo.GetType());
 
-                                RoomSort.RoomInfo room = _roomInfoSort.GetRoom(pShowBattleInfo._roomNumber);
+                                RoomInfo room = _roomInfoSort.GetRoom(pShowBattleInfo._roomNumber);
 
-                                RoomSort.UserInfo userInfo = new RoomSort.UserInfo();
+                                UserInfo userInfo = new UserInfo();
                                 userInfo._index = room.EmptyIndex();
                                 userInfo._UUID = pShowBattleInfo._UUID;
                                 userInfo._nickName = pShowBattleInfo._nickName;
@@ -977,7 +1001,7 @@ namespace Server_Scientia
                                 DefinedStructure.P_ShowAllCard pShowAllCard = new DefinedStructure.P_ShowAllCard();
                                 pShowAllCard = (DefinedStructure.P_ShowAllCard)tData.Convert(pShowAllCard.GetType());
 
-                                RoomSort.RoomInfo roomToBattle = _roomInfoSort.GetRoom(pShowAllCard._roomNum);
+                                RoomInfo roomToBattle = _roomInfoSort.GetRoom(pShowAllCard._roomNum);
 
                                 switch(roomToBattle._mode)
                                 {
@@ -1015,7 +1039,7 @@ namespace Server_Scientia
             _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.GetBattleInfo, pGetBattleInfo));
         }
 
-        bool CheckAllReady(RoomSort.RoomInfo room)
+        bool CheckAllReady(RoomInfo room)
         {
             int cnt = 0;
             for (int n = 0; n < room._userList.Count; n++)
@@ -1035,7 +1059,7 @@ namespace Server_Scientia
                 return false;
         }
 
-        bool CheckAllReadCard(RoomSort.RoomInfo room)
+        bool CheckAllReadCard(RoomInfo room)
         {
             int cnt = 0;
             for (int n = 0; n < room._userList.Count; n++)
@@ -1050,7 +1074,7 @@ namespace Server_Scientia
                 return false;
         }
 
-        void PickCardRandomly(RoomSort.RoomInfo room, int[] cardArr, int cardCnt)
+        void PickCardRandomly(RoomInfo room, int[] cardArr, int cardCnt)
         {
             Random rd = new Random();
 

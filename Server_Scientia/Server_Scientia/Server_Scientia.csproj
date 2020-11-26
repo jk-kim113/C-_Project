@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CardData.cs" />
+    <Compile Include="CardInfo.cs" />
     <Compile Include="ConvertPacket.cs" />
     <Compile Include="DefinedProtocol.cs" />
     <Compile Include="DefinedStructure.cs" />
@@ -54,12 +55,14 @@
     <Compile Include="PacketClass.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RoomInfo.cs" />
     <Compile Include="RoomSort.cs" />
     <Compile Include="SimpleJSON.cs" />
     <Compile Include="SocketClass.cs" />
     <Compile Include="SocketManagerClass.cs" />
     <Compile Include="TableBase.cs" />
     <Compile Include="TableManager.cs" />
+    <Compile Include="UserInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
