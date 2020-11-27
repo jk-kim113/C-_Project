@@ -528,7 +528,7 @@ namespace Server_Scientia
 
                                                 for (int n = 0; n < userRotateCard._CardSlotCnt; n++)
                                                 {
-                                                    if(n < userRotateCard._NowCardCnt)
+                                                    if(n < userRotateCard._UnLockSlotCnt)
                                                     {
                                                         if(userRotateCard._PickedCardArr[n] == 0)
                                                             pInformRotateCard._cardArr[n] = 0;
@@ -595,40 +595,7 @@ namespace Server_Scientia
                                     for(int n = 0; n < userFinishRotate._CardSlotCnt; n++)
                                         userFinishRotate._RotateInfoArr[n] += pFinishRotate._rotateCardInfoArr[n];
 
-                                    int completeCount;
-                                    if (userFinishRotate.IsComplete(out completeCount))
-                                    {
-                                        if(completeCount >= 2)
-                                        {
-                                            DefinedStructure.P_SelectCompleteCard pSelectCompleteCard;
-                                            pSelectCompleteCard._index = userFinishRotate._Index;
-                                            pSelectCompleteCard._cardArr = new int[userFinishRotate._CardSlotCnt];
-                                            for (int n = 0; n < userFinishRotate._CardSlotCnt; n++)
-                                            {
-                                                if (userFinishRotate._RotateInfoArr[n] >= 4)
-                                                    pSelectCompleteCard._cardArr[n] = userFinishRotate._RotateInfoArr[n];
-                                                else
-                                                    pSelectCompleteCard._cardArr[n] = 0;
-                                            }
-
-                                            SendBufferInRoom(roomFinishRotate, DefinedProtocol.eToClient.SelectCompleteCard, pSelectCompleteCard);
-                                        }
-                                        else
-                                        {
-                                            if(roomFinishRotate._CardDeck.GetFlaskOnCard(userFinishRotate.GetCompleteCard()) > 0)
-                                            {
-                                                //TODO Move Flask Cube
-                                            }
-                                            else
-                                            {
-
-                                            }
-
-                                            ApplyEffect(userFinishRotate.GetCompleteCard(), userFinishRotate);
-                                        }
-                                    }
-                                    else
-                                        InformNowTurn(roomFinishRotate, DefinedProtocol.eToClient.ChooseAction);
+                                    CheckCompleteCard(roomFinishRotate, userFinishRotate);
 
                                     break;
 
@@ -640,7 +607,10 @@ namespace Server_Scientia
                                     RoomInfo roomChooseCompleteCard = _roomInfoSort.GetRoom(pChooseCompleteCard._roomNumber);
                                     UserInfo userChooseCompleteCard = roomChooseCompleteCard.SearchUser(packet._UUID);
 
+                                    MoveCube(roomChooseCompleteCard, userChooseCompleteCard);
                                     ApplyEffect(userChooseCompleteCard._PickedCardArr[pChooseCompleteCard._index], userChooseCompleteCard);
+
+                                    CheckCompleteCard(roomChooseCompleteCard, userChooseCompleteCard);
 
                                     break;
 
@@ -858,6 +828,7 @@ namespace Server_Scientia
                                 break;
                             #endregion
 
+                            #region Game Ready
                             case DefinedProtocol.eToServer.ShowBattleInfo:
 
                                 DefinedStructure.P_ShowBattleInfo pShowBattleInfo = new DefinedStructure.P_ShowBattleInfo();
@@ -866,7 +837,7 @@ namespace Server_Scientia
                                 RoomInfo room = _roomInfoSort.GetRoom(pShowBattleInfo._roomNumber);
 
                                 UserInfo userInfo = new UserInfo();
-                                userInfo.InitUserInfo(pShowBattleInfo._UUID, pShowBattleInfo._nickName, pShowBattleInfo._accountlevel);
+                                userInfo.InitUserInfo(pShowBattleInfo._UUID, pShowBattleInfo._nickName, pShowBattleInfo._accountlevel, room);
                                 room.AddUser(userInfo);
                                 
                                 for(int n = 0; n < room._UserArr.Length; n++)
@@ -911,6 +882,7 @@ namespace Server_Scientia
                                 }
 
                                 break;
+                                #endregion
                         }
                     }
 
@@ -1062,10 +1034,32 @@ namespace Server_Scientia
                     room._ThisTurn = 0;
             }
 
-            DefinedStructure.P_ThisTurn pInformNowTurn;
-            pInformNowTurn._index = room._ThisTurn;
+            if(room._IsFinalTurn && room._ThisTurn == room._Master)
+            {
+                //TODO All Ready Release
+                for(int n = 0; n < room._UserArr.Length; n++)
+                {
+                    if(room._UserArr[n] != null)
+                    {
+                        DefinedStructure.P_GameOver pGameOver;
 
-            SendBufferInRoom(room, protocolType, pInformNowTurn);
+                        int count = 0;
+                        if(room._UserArr[n].IsPhysicsSpecificScore(out count))
+                            pGameOver._specificScore = count;
+                        else
+                            pGameOver._specificScore = 0;
+
+                        _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.GameOver, pGameOver, room._UserArr[n]._UUID));
+                    }
+                }
+            }
+            else
+            {
+                DefinedStructure.P_ThisTurn pInformNowTurn;
+                pInformNowTurn._index = room._ThisTurn;
+
+                SendBufferInRoom(room, protocolType, pInformNowTurn);
+            }
         }
 
         void SendBufferInRoom(RoomInfo room, DefinedProtocol.eToClient protocolType, object str)
@@ -1109,6 +1103,52 @@ namespace Server_Scientia
 
                     break;
             }
+        }
+
+        void CheckCompleteCard(RoomInfo room, UserInfo user)
+        {
+            int completeCnt;
+            if (user.IsComplete(out completeCnt))
+            {
+                if (completeCnt >= 2)
+                {
+                    DefinedStructure.P_SelectCompleteCard pSelectCompleteCard;
+                    pSelectCompleteCard._index = user._Index;
+                    pSelectCompleteCard._cardArr = new int[user._CardSlotCnt];
+                    for (int n = 0; n < user._CardSlotCnt; n++)
+                    {
+                        if (user._RotateInfoArr[n] >= 4)
+                            pSelectCompleteCard._cardArr[n] = user._RotateInfoArr[n];
+                        else
+                            pSelectCompleteCard._cardArr[n] = 0;
+                    }
+
+                    SendBufferInRoom(room, DefinedProtocol.eToClient.SelectCompleteCard, pSelectCompleteCard);
+                }
+                else
+                {
+                    MoveCube(room, user);
+                    ApplyEffect(user.GetCompleteCard(), user);
+                }
+            }
+            else
+                InformNowTurn(room, DefinedProtocol.eToClient.ChooseAction);
+        }
+
+        void MoveCube(RoomInfo room, UserInfo user)
+        {
+            int completeCardIndex = user.GetCompleteCard();
+            if (room._CardDeck.GetFlaskOnCard(completeCardIndex) > 0)
+            {
+                //TODO Move Flask Cube
+                if (!user._IsFlaskEffect && user._FlaskCubeCnt >= 5)
+                    user.AddCardSlot();
+            }
+
+            user.MoveSkillCube((eCardField)_tbMgr.Get(eTableType.CardData).ToI(completeCardIndex, CardData.Index.Field.ToString()));
+
+            if (!user._IsSkillEffect && user.AllSkillCubeCount() >= 5)
+                user.AddCardSlot();
         }
 
         public void MainLoop()

@@ -316,6 +316,13 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
             public int[] _cardArr;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_GameOver
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _specificScore;
+        }
         #endregion
 
         #region FromServer

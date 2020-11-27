@@ -30,10 +30,16 @@ namespace Server_Scientia
         UserInfo[] _userArr = new UserInfo[_userCnt];
         int _currentMemberCnt;
         int _thisTurn;
+        int _maxSkillCube;
+        int _maxFlaskCube;
+        bool _isFinalTurn;
 
         public UserInfo[] _UserArr { get { return _userArr; } }
         public int _NowMemeberCnt { get { return _currentMemberCnt; } }
         public int _ThisTurn { get { return _thisTurn; } set { _thisTurn = value; } }
+        public int _MaxSkillCube { get { return _maxSkillCube; } set { _maxSkillCube = value; } }
+        public int _MaxFlaskCube { get { return _maxFlaskCube; } }
+        public bool _IsFinalTurn { get { return _isFinalTurn; } set { _isFinalTurn = value; } }
 
         CardInfo _cardInfo = new CardInfo();
 

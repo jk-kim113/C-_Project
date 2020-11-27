@@ -62,6 +62,7 @@ namespace Server_Scientia
             RotateCard,
             ShowRotateInfo,
             SelectCompleteCard,
+            GameOver,
 
             ConfirmTerminate,
 
