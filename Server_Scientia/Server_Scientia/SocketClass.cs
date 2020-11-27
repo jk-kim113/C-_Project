@@ -36,7 +36,7 @@ namespace Server_Scientia
             buffer = new byte[1032];
             recvLen = 0;
             
-            if (_mySocket.Poll(0, SelectMode.SelectRead))
+            if (_mySocket != null && _mySocket.Poll(0, SelectMode.SelectRead))
             {
                 try
                 {
@@ -58,9 +58,21 @@ namespace Server_Scientia
 
         public void Close()
         {
-            _mySocket.Shutdown(SocketShutdown.Both);
-            _mySocket.Close();
-            _mySocket = null;
+            try
+            {
+                _mySocket.Shutdown(SocketShutdown.Both);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            finally
+            {
+                _mySocket.Close(0);
+                _mySocket = null;
+
+                Console.WriteLine("{0} 유저가 접속을 종료하였습니다.", _uniqueIdx);
+            }
         }
     }
 }

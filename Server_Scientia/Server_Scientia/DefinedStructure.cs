@@ -139,8 +139,6 @@ namespace Server_Scientia
         {
             [MarshalAs(UnmanagedType.I4)]
             public int _roomNumber;
-            [MarshalAs(UnmanagedType.I4)]
-            public int _index;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
             public int[] _rotateCardInfoArr;
         }

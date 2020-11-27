@@ -38,7 +38,7 @@ namespace Server_Scientia
                 {
                     byte[] buffer;
                     int recvLen;
-                    if (_socketList[n].ReceiveBuffer(out buffer, out recvLen))
+                    if (_socketList[n] != null && _socketList[n].ReceiveBuffer(out buffer, out recvLen))
                     {
                         DefinedStructure.PacketInfo pInfo = new DefinedStructure.PacketInfo();
                         pInfo = (DefinedStructure.PacketInfo)ConvertPacket.ByteArrayToStructure(buffer, pInfo.GetType(), recvLen);
@@ -90,7 +90,7 @@ namespace Server_Scientia
         public SocketClass SearchByUUID(long uuid)
         {
             for (int n = 0; n < _socketList.Count; n++)
-                if (_socketList[n]._UUID == uuid)
+                if (_socketList[n] != null && _socketList[n]._UUID == uuid)
                     return _socketList[n];
 
             return null;

@@ -63,6 +63,8 @@ namespace Server_Scientia
             ShowRotateInfo,
             SelectCompleteCard,
 
+            ConfirmTerminate,
+
             max
         }
 

@@ -285,6 +285,8 @@ namespace Server_Scientia
 
                                     GetBattleInfo(roomInfo._RoomNumber, packet._UUID, pCreateRoom._nickName);
 
+                                    Console.WriteLine("{0} 유저가 {1}번 방을 만들었습니다.", packet._UUID, roomInfo._RoomNumber);
+
                                     break;
 
                                 case DefinedProtocol.eFromClient.GetRoomList:
@@ -368,7 +370,10 @@ namespace Server_Scientia
                                                 pGetAllCard._nickNameArr = string.Empty;
 
                                                 for (int n = 0; n < roomStart._UserArr.Length; n++)
-                                                    pGetAllCard._nickNameArr += roomStart._UserArr[n]._NickName + ",";
+                                                {
+                                                    if (roomStart._UserArr[n] != null && roomStart._UserArr[n]._IsReady)
+                                                        pGetAllCard._nickNameArr += roomStart._UserArr[n]._NickName + ",";
+                                                }   
 
                                                 _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.GetAllCard, pGetAllCard));
 
@@ -402,7 +407,8 @@ namespace Server_Scientia
                                         if (roomFinishReadCard._ThisTurn < 0)
                                             roomFinishReadCard._ThisTurn = roomFinishReadCard._UserArr.Length - 1;
 
-                                        while(roomFinishReadCard._UserArr[roomFinishReadCard._ThisTurn]._IsEmpty)
+                                        while(roomFinishReadCard._UserArr[roomFinishReadCard._ThisTurn] == null || 
+                                                roomFinishReadCard._UserArr[roomFinishReadCard._ThisTurn]._IsEmpty)
                                         {
                                             roomFinishReadCard._ThisTurn--;
 
@@ -452,7 +458,8 @@ namespace Server_Scientia
                                                     if (--roomPickCard._ThisTurn < 0)
                                                         roomPickCard._ThisTurn = roomPickCard._UserArr.Length - 1;
 
-                                                    while (roomPickCard._UserArr[roomPickCard._ThisTurn]._IsEmpty)
+                                                    while (roomPickCard._UserArr[roomPickCard._ThisTurn] ==null || 
+                                                            roomPickCard._UserArr[roomPickCard._ThisTurn]._IsEmpty)
                                                     {
                                                         roomPickCard._ThisTurn--;
 
@@ -462,7 +469,7 @@ namespace Server_Scientia
 
                                                     DefinedStructure.P_ThisTurn pPickCardState;
                                                     pPickCardState._index = roomPickCard._ThisTurn;
-
+                                                    Console.WriteLine("이번 턴 : {0}", pPickCardState._index);
                                                     SendBufferInRoom(roomPickCard, DefinedProtocol.eToClient.PickCard, pPickCardState);
                                                 }
                                             }   
@@ -638,6 +645,11 @@ namespace Server_Scientia
                                     break;
 
                                 case DefinedProtocol.eFromClient.ConnectionTerminate:
+
+                                    Console.WriteLine("{0} 유저가 접속 종료를 시도합니다.", packet._UUID);
+
+                                    DefinedStructure.P_Request pCofirmTerminate;
+                                    _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ConfirmTerminate, pCofirmTerminate, packet._UUID));
 
                                     _socketManager.CloseSocket(packet._CastIdendifier);
 
@@ -859,7 +871,7 @@ namespace Server_Scientia
                                 
                                 for(int n = 0; n < room._UserArr.Length; n++)
                                 {
-                                    if(!room._UserArr[n]._IsEmpty)
+                                    if(room._UserArr[n] != null && !room._UserArr[n]._IsEmpty)
                                     {
                                         DefinedStructure.P_UserInfo pUserInfo;
                                         pUserInfo._roomNumber = pShowBattleInfo._roomNumber;
@@ -924,27 +936,27 @@ namespace Server_Scientia
 
         bool CheckAllReady(RoomInfo room)
         {
+            int readyCount = 0;
             for (int n = 0; n < room._UserArr.Length; n++)
             {
-                if(!room._UserArr[n]._IsEmpty)
-                {
-                    if (!room._UserArr[n]._IsReady)
-                    {
-                        return false;
-                    }
-                }
+                if(room._UserArr[n] != null && !room._UserArr[n]._IsEmpty && n != room._Master && room._UserArr[n]._IsReady)
+                    readyCount++;
             }
-            
-            return true;
+
+            if (readyCount != 0 && readyCount == room._NowMemeberCnt - 1)
+                return true;
+            else
+                return false;
+
         }
 
         bool CheckAllReadCard(RoomInfo room)
         {
             for (int n = 0; n < room._UserArr.Length; n++)
             {
-                if(!room._UserArr[n]._IsEmpty)
+                if(room._UserArr[n] != null && !room._UserArr[n]._IsEmpty)
                 {
-                    if (room._UserArr[n]._IsFinishReadCard)
+                    if (!room._UserArr[n]._IsFinishReadCard)
                         return false;
                 }
             }
@@ -1042,16 +1054,16 @@ namespace Server_Scientia
             if (++room._ThisTurn >= room._UserArr.Length)
                 room._ThisTurn = 0;
 
-            while (room._UserArr[room._ThisTurn]._IsEmpty)
+            while (room._UserArr[room._ThisTurn] == null || room._UserArr[room._ThisTurn]._IsEmpty)
             {
                 room._ThisTurn++;
 
-                if (++room._ThisTurn >= room._UserArr.Length)
+                if (room._ThisTurn >= room._UserArr.Length)
                     room._ThisTurn = 0;
             }
 
             DefinedStructure.P_ThisTurn pInformNowTurn;
-            pInformNowTurn._index = room._Master;
+            pInformNowTurn._index = room._ThisTurn;
 
             SendBufferInRoom(room, protocolType, pInformNowTurn);
         }
@@ -1060,7 +1072,7 @@ namespace Server_Scientia
         {
             for (int n = 0; n < room._UserArr.Length; n++)
             {
-                if (!room._UserArr[n]._IsEmpty)
+                if (room._UserArr[n] != null && !room._UserArr[n]._IsEmpty)
                 {
                     _toClientQueue.Enqueue(_socketManager.AddToQueue(protocolType, str, room._UserArr[n]._UUID));
                 }

@@ -18,11 +18,11 @@ namespace Server_Scientia
         public string _NickName { get { return _nickName; } }
         public int _Level { get { return _level; } }
 
-        bool _isEmpty;
+        bool _isEmpty = true;
         bool _isReady;
         bool _isFinishReadCard;
 
-        public bool _IsEmpty { get { return _isEmpty; } }
+        public bool _IsEmpty { get { return _isEmpty; } set { _isEmpty = value; } }
         public bool _IsReady { get { return _isReady; } set { _isReady = value; } }
         public bool _IsFinishReadCard { get { return _isFinishReadCard; } set { _isFinishReadCard = value; } }
 
@@ -30,7 +30,7 @@ namespace Server_Scientia
 
         int[] _pickedCardArr = new int[_cardSlotCnt];
         int _currentCardCnt;
-        int _unLockSlotCnt;
+        int _unLockSlotCnt = 2;
         int[] _rotateInfoArr = new int[_cardSlotCnt];
         int _flaskCubeCnt;
 

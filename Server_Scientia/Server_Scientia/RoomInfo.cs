@@ -58,13 +58,14 @@ namespace Server_Scientia
         {
             for(int n = 0; n < _userArr.Length; n++)
             {
-                if (_userArr[n]._IsEmpty)
+                if(_userArr[n] == null || _userArr[n]._IsEmpty)
                 {
                     _userArr[n] = user;
                     _userArr[n]._Index = n;
+                    _userArr[n]._IsEmpty = false;
                     _currentMemberCnt++;
                     break;
-                }   
+                }  
             }
         }
 
