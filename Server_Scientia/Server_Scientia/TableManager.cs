@@ -10,6 +10,7 @@ namespace Server_Scientia
     public enum eTableType
     {
         CardData,
+        ItemData,
 
         max
     }
@@ -44,6 +45,7 @@ namespace Server_Scientia
         public void LoadAll()
         {
             Load<CardData>(eTableType.CardData);
+            Load<ItemData>(eTableType.ItemData);
         }
 
         public TableBase Get(eTableType type)

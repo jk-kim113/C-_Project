@@ -579,6 +579,152 @@ namespace DB_Scientia
             }
         }
 
+        public void SearchShopInfo(string nickName, Dictionary<int, int> itemDic)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT ItemIndex,ItemCount FROM iteminfo WHERE NickName = '{0}';", nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        itemDic.Add(int.Parse(table["ItemIndex"].ToString()), int.Parse(table["ItemCount"].ToString()));
+                    }
+
+                    table.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public void SearchCoin(string nickName, List<int> coinList)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT MasterCoin,AccountCoin,PhysicsCoin,ChemistryCoin,BiologyCoin,AstronomyCoin FROM characterinfo WHERE NickName = '{0}';", nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        coinList.Add(int.Parse(table["MasterCoin"].ToString()));
+                        coinList.Add(int.Parse(table["AccountCoin"].ToString()));
+                        coinList.Add(int.Parse(table["PhysicsCoin"].ToString()));
+                        coinList.Add(int.Parse(table["ChemistryCoin"].ToString()));
+                        coinList.Add(int.Parse(table["BiologyCoin"].ToString()));
+                        coinList.Add(int.Parse(table["AstronomyCoin"].ToString()));
+                    }
+
+                    table.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public int SearchSavedCoin(string nickName, string coinKind)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT {0} FROM characterinfo WHERE NickName = '{1}';", coinKind, nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        return int.Parse(table[coinKind].ToString());
+                    }
+
+                    table.Close();
+                    return 0;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+
+                return 0;
+            }
+        }
+
+        public bool SearchItemCount(string nickName, int itemIndex, out int itemCnt)
+        {
+            itemCnt = 0;
+
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT ItemCount FROM iteminfo WHERE NickName = '{0}' AND ItemIndex = {1};", nickName, itemIndex);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        itemCnt = int.Parse(table["ItemCount"].ToString());
+                        return true;
+                    }
+
+                    table.Close();
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+
+                return false;
+            }
+        }
+
         public bool InsertUserInfo(string id, string pw)
         {
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
@@ -672,6 +818,108 @@ namespace DB_Scientia
                     else
                     {
                         Console.WriteLine("Insert Fail");
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public void InsertItem(string nickName, int itemIndex)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string insertQuery = string.Format("INSERT INTO iteminfo(NickName, ItemIndex, ItemCount) VALUES ('{0}',{1},{2});", nickName, itemIndex, 1);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(insertQuery, connection);
+
+                    if (command.ExecuteNonQuery() == 1)
+                    {
+                        Console.WriteLine("Insert Success");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Insert Fail");
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public void UpdateCoinValue(string nickName, string coinKind, int coin)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string updateQuery = string.Format("UPDATE characterinfo SET {0}={1} WHERE NickName='{2}';", coinKind, coin, nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(updateQuery, connection);
+
+                    if (command.ExecuteNonQuery() == 1)
+                    {
+                        Console.WriteLine("Update Success");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Update Fail");
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public void UpdateItemCount(string nickName, int itemIndex, int itemCnt)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string updateQuery = string.Format("UPDATE iteminfo SET ItemCount = {0} WHERE NickName='{1}' AND ItemIndex={2};", itemCnt, nickName, itemIndex);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(updateQuery, connection);
+
+                    if (command.ExecuteNonQuery() == 1)
+                    {
+                        Console.WriteLine("Update Success");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Update Fail");
                     }
 
                 }

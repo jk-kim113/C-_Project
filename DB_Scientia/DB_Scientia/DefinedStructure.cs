@@ -188,5 +188,72 @@ namespace DB_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _cardCount;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_GetShopInfo
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_UserShopInfo
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemIndex;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemCount;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_FinishUserShopInfo
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
+            public int[] _coinArr;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_TryBuyItem
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemIndex;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _exchangeType;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _coin;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _coinKind;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _exchangeResult;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ResultBuyItem
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemIndex;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _isSuccess;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _exchangeType;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemCount;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _coinKind;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _remainCoin;
+        }
     }
 }

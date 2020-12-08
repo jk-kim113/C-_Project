@@ -20,6 +20,8 @@ namespace DB_Scientia
             AddReleaseCard,
             GetBattleInfo,
             GetAllCard,
+            GetShopInfo,
+            TryBuyItem,
 
             max
         }
@@ -37,6 +39,9 @@ namespace DB_Scientia
             CompleteAddReleaseCard,
             ShowBattleInfo,
             ShowAllCard,
+            UserShopInfo,
+            FinishUserShopInfo,
+            ResultBuyItem,
 
             max
         }

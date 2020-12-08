@@ -8,9 +8,7 @@ namespace Server_Scientia
 {
     class CardInfo
     {
-        Dictionary<eCardField, int[]> _cardDeck = new Dictionary<eCardField, int[]>();
-        Dictionary<eCardField, int[]> _flaskOnCard = new Dictionary<eCardField, int[]>();
-        Dictionary<eCardField, int> _cardCount = new Dictionary<eCardField, int>();
+        Dictionary<eCardField, Card[]> _cardDeck = new Dictionary<eCardField, Card[]>();
 
         const int _maxFieldCnt = 3;
         int _currentCardCnt = 0;
@@ -20,39 +18,48 @@ namespace Server_Scientia
         public void InitCardDeck()
         {
             for(int n = 0; n < (int)eCardField.max; n++)
-            {
-                _cardDeck.Add((eCardField)n, new int[_maxFieldCnt]);
-                _flaskOnCard.Add((eCardField)n, new int[_maxFieldCnt]);
-                _cardCount.Add((eCardField)n, 0);
-            }
+                _cardDeck.Add((eCardField)n, new Card[_maxFieldCnt]);
         }
 
         public void AddCard(eCardField field, int cardIndex)
         {
             for(int n = 0; n < _cardDeck[field].Length; n++)
             {
-                if(_cardDeck[field][n] == 0)
+                if(_cardDeck[field][n] == null)
+                    _cardDeck[field][n] = new Card();
+
+                if (_cardDeck[field][n]._IsEmpty)
                 {
-                    _cardDeck[field][n] = cardIndex;
+                    _cardDeck[field][n].Add(cardIndex);
+                    _cardDeck[field][n]._IsEmpty = false;
                     break;
                 }
             }
 
-            _cardCount[field]++;
             _currentCardCnt++;
         }
 
         public int FieldCount(eCardField field)
         {
-            return _cardCount[field];
+            int temp = 0;
+            for(int n = 0; n < _cardDeck[field].Length; n++)
+            {
+                if (_cardDeck[field][n] != null && !_cardDeck[field][n]._IsEmpty)
+                    temp++;
+            }
+
+            return temp;
         }
 
         public bool IsOver()
         {
-            foreach (eCardField key in _cardCount.Keys)
+            foreach (eCardField key in _cardDeck.Keys)
             {
-                if (_cardCount[key] != 3)
-                    return false;
+                for(int n = 0; n < _cardDeck[key].Length; n++)
+                {
+                    if (_cardDeck[key][n] == null || _cardDeck[key][n]._IsEmpty)
+                        return false;
+                }
             }
 
             return true;
@@ -60,26 +67,114 @@ namespace Server_Scientia
 
         public bool IsContain(eCardField field, int cardIndex)
         {
-            return _cardDeck[field].Contains(cardIndex);
+            for (int n = 0; n < _cardDeck[field].Length; n++)
+            {
+                if (_cardDeck[field][n] != null && _cardDeck[field][n]._CardIndex == cardIndex)
+                    return true;
+            }
+
+            return false;
         }
 
         public int[] GetFieldCard(eCardField field)
         {
-            return _cardDeck[field];
+            int[] temp = new int[_cardDeck[field].Length];
+
+            for (int n = 0; n < temp.Length; n++)
+                temp[n] = _cardDeck[field][n]._CardIndex;
+
+            return temp;
         }
 
-        public int GetFlaskOnCard(int cardIndex)
+        public bool GetFlaskOnCard(int cardIndex, out int flaskCnt)
         {
-            foreach(eCardField key in _cardDeck.Keys)
+            flaskCnt = 0;
+            foreach (eCardField key in _cardDeck.Keys)
             {
                 for(int n = 0; n < _cardDeck[key].Length; n++)
                 {
-                    if (_cardDeck[key][n] == cardIndex)
-                        return _flaskOnCard[key][n];
+                    if (_cardDeck[key][n]._CardIndex == cardIndex)
+                    {
+                        flaskCnt = _cardDeck[key][n]._FlaskCount;
+                        _cardDeck[key][n]._FlaskCount = 0;
+                        return true;
+                    }
+                        
                 }
             }
 
-            return 0;
+            return false;
+        }
+
+        public void PickCard(int cardIndex)
+        {
+            foreach(eCardField field in _cardDeck.Keys)
+            {
+                for(int n = 0; n < _cardDeck[field].Length; n++)
+                {
+                    if (_cardDeck[field][n]._CardIndex == cardIndex)
+                    {
+                        _cardDeck[field][n]._CardCount--;
+                        return;
+                    }
+                }
+            }
+        }
+
+        public int CardCount(int cardIndex)
+        {
+            foreach (eCardField field in _cardDeck.Keys)
+            {
+                for (int n = 0; n < _cardDeck[field].Length; n++)
+                {
+                    if (_cardDeck[field][n]._CardIndex == cardIndex)
+                        return _cardDeck[field][n]._CardCount;
+                }
+            }
+
+            return -1;
+        }
+
+        public void ReturnCard(int cardIndex)
+        {
+            foreach (eCardField field in _cardDeck.Keys)
+            {
+                for (int n = 0; n < _cardDeck[field].Length; n++)
+                {
+                    if (_cardDeck[field][n]._CardIndex == cardIndex)
+                    {
+                        _cardDeck[field][n]._CardCount++;
+                        return;
+                    }
+                }
+            }
+        }
+
+        internal class Card
+        {
+            int _cardIndex;
+            int _flaskCount;
+            int _cardCount;
+
+            public int _CardIndex { get { return _cardIndex; } }
+            public int _FlaskCount { get { return _flaskCount; } set { _flaskCount = value; } }
+            public int _CardCount { get { return _cardCount; } set { _cardCount = value; } }
+
+            bool _isEmpty;
+            public bool _IsEmpty { get { return _isEmpty; } set { _isEmpty = value; } }
+
+            public Card()
+            {
+                _flaskCount = 0;
+                _cardCount = 0;
+                _isEmpty = true;
+            }
+
+            public void Add(int cardIndex)
+            {
+                _cardIndex = cardIndex;
+                _cardCount = 2;
+            }
         }
     }
 }

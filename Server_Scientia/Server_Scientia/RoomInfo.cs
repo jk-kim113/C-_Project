@@ -23,7 +23,7 @@ namespace Server_Scientia
         public string _Mode { get { return _mode; } }
         public string _Rule { get { return _rule; } }
         public int _Master { get { return _master; } }
-        public bool _IsPlay { get { return _isPlay; } }
+        public bool _IsPlay { get { return _isPlay; } set { _isPlay = value; } }
 
         const int _userCnt = 4;
 
@@ -38,7 +38,7 @@ namespace Server_Scientia
         public int _NowMemeberCnt { get { return _currentMemberCnt; } }
         public int _ThisTurn { get { return _thisTurn; } set { _thisTurn = value; } }
         public int _MaxSkillCube { get { return _maxSkillCube; } set { _maxSkillCube = value; } }
-        public int _MaxFlaskCube { get { return _maxFlaskCube; } }
+        public int _MaxFlaskCube { get { return _maxFlaskCube; } set { _maxFlaskCube = value; } }
         public bool _IsFinalTurn { get { return _isFinalTurn; } set { _isFinalTurn = value; } }
 
         CardInfo _cardInfo = new CardInfo();

@@ -22,6 +22,16 @@ namespace Server_Scientia
         max
     }
 
+    public enum eCoinType
+    {
+        MasterCoin,
+        AccountCoin,
+        PhysicsCoin,
+        ChemistryCoin,
+        BiologyCoin,
+        AstronomyCoin
+    }
+
     class MainServer
     {
         const short _port = 80;
@@ -56,6 +66,19 @@ namespace Server_Scientia
         {
             _tbMgr.LoadAll();
             CreateServer();
+        }
+
+        public void Test()
+        {
+            RoomInfo room = new RoomInfo();
+            UserInfo user = new UserInfo();
+            user.InitUserInfo(1, "Test", 1, room);
+            user.InitSkillCube();
+            user.MoveSkillCube(eCardField.Physics);
+
+            int[] userskill = user.SkillCubePos(eCardField.Physics);
+            
+            Console.WriteLine("스킬 큐브의 위치 : {0} // {1} // {2} // {3} // {4}", userskill[0], userskill[1], userskill[2], userskill[3], userskill[4]);
         }
 
         void CreateServer()
@@ -351,9 +374,20 @@ namespace Server_Scientia
 
                                     if(CheckAllReady(roomStart))
                                     {
-                                        //TODO Game Start Change Bool Value to Playing true
+                                        Console.WriteLine("{0}번 방에서 게임이 시작되었습니다.");
+                                        roomStart._MaxSkillCube = 8;
+                                        roomStart._MaxFlaskCube = 30;
+                                        roomStart._IsPlay = true;
 
-                                        DefinedStructure.P_Request pGameStart;
+                                        for(int n = 0; n < roomStart._UserArr.Length; n++)
+                                        {
+                                            if (roomStart._UserArr[n] != null && !roomStart._UserArr[n]._IsEmpty)
+                                                roomStart._UserArr[n].InitSkillCube();
+                                        }
+
+                                        DefinedStructure.P_GameStart pGameStart;
+                                        pGameStart._skilcubeCnt = 8;
+                                        pGameStart._flaskcubeCnt = 30;
                                         SendBufferInRoom(roomStart, DefinedProtocol.eToClient.GameStart, pGameStart);
 
                                         switch (roomStart._Mode)
@@ -373,7 +407,7 @@ namespace Server_Scientia
                                                 {
                                                     if (roomStart._UserArr[n] != null && roomStart._UserArr[n]._IsReady)
                                                         pGetAllCard._nickNameArr += roomStart._UserArr[n]._NickName + ",";
-                                                }   
+                                                }
 
                                                 _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.GetAllCard, pGetAllCard));
 
@@ -430,57 +464,48 @@ namespace Server_Scientia
                                     pPickCard = (DefinedStructure.P_PickCard)packet.Convert(pPickCard.GetType());
 
                                     RoomInfo roomPickCard = _roomInfoSort.GetRoom(pPickCard._roomNumber);
+                                    UserInfo userPickCard = roomPickCard.SearchUser(packet._UUID);
 
-                                    for(int n = 0; n < roomPickCard._UserArr.Length; n++)
+                                    if (userPickCard.IsEmptyCardSlot())
                                     {
-                                        if(roomPickCard._UserArr[n]._UUID == packet._UUID)
+                                        RenewProjectBoard(roomPickCard, pPickCard._cardIndex);
+
+                                        int slotIndex = userPickCard.AddCard(pPickCard._cardIndex);
+                                        RenewCardSlot(roomPickCard, userPickCard, pPickCard._cardIndex, slotIndex);
+
+                                        if (roomPickCard._UserArr[roomPickCard._Master]._UUID == packet._UUID)
                                         {
-                                            if (roomPickCard._UserArr[n].IsEmptyCardSlot())
+                                            roomPickCard._ThisTurn = roomPickCard._Master;
+
+                                            DefinedStructure.P_ThisTurn pGameTurn;
+                                            pGameTurn._index = roomPickCard._Master;
+
+                                            SendBufferInRoom(roomPickCard, DefinedProtocol.eToClient.ChooseAction, pGameTurn);
+                                        }
+                                        else
+                                        {
+                                            if (--roomPickCard._ThisTurn < 0)
+                                                roomPickCard._ThisTurn = roomPickCard._UserArr.Length - 1;
+
+                                            while (roomPickCard._UserArr[roomPickCard._ThisTurn] == null ||
+                                                    roomPickCard._UserArr[roomPickCard._ThisTurn]._IsEmpty)
                                             {
-                                                DefinedStructure.P_ShowPickCard pShowPickCard;
-                                                pShowPickCard._index = roomPickCard._UserArr[n]._Index;
-                                                pShowPickCard._cardIndex = pPickCard._cardIndex;
-                                                pShowPickCard._slotIndex = roomPickCard._UserArr[n].AddCard(pPickCard._cardIndex);
+                                                roomPickCard._ThisTurn--;
 
-                                                SendBufferInRoom(roomPickCard, DefinedProtocol.eToClient.ShowPickCard, pShowPickCard);
-                                                
-                                                if(roomPickCard._UserArr[roomPickCard._Master]._UUID == packet._UUID)
-                                                {
-                                                    roomPickCard._ThisTurn = roomPickCard._Master;
+                                                if (roomPickCard._ThisTurn < 0)
+                                                    roomPickCard._ThisTurn = roomPickCard._UserArr.Length - 1;
+                                            }
 
-                                                    DefinedStructure.P_ThisTurn pGameTurn;
-                                                    pGameTurn._index = roomPickCard._Master;
-
-                                                    SendBufferInRoom(roomPickCard, DefinedProtocol.eToClient.ChooseAction, pGameTurn);
-                                                }
-                                                else
-                                                {
-                                                    if (--roomPickCard._ThisTurn < 0)
-                                                        roomPickCard._ThisTurn = roomPickCard._UserArr.Length - 1;
-
-                                                    while (roomPickCard._UserArr[roomPickCard._ThisTurn] ==null || 
-                                                            roomPickCard._UserArr[roomPickCard._ThisTurn]._IsEmpty)
-                                                    {
-                                                        roomPickCard._ThisTurn--;
-
-                                                        if (roomPickCard._ThisTurn < 0)
-                                                            roomPickCard._ThisTurn = roomPickCard._UserArr.Length - 1;
-                                                    }
-
-                                                    DefinedStructure.P_ThisTurn pPickCardState;
-                                                    pPickCardState._index = roomPickCard._ThisTurn;
-                                                    Console.WriteLine("이번 턴 : {0}", pPickCardState._index);
-                                                    SendBufferInRoom(roomPickCard, DefinedProtocol.eToClient.PickCard, pPickCardState);
-                                                }
-                                            }   
-
-                                            break;
+                                            DefinedStructure.P_ThisTurn pPickCardState;
+                                            pPickCardState._index = roomPickCard._ThisTurn;
+                                            SendBufferInRoom(roomPickCard, DefinedProtocol.eToClient.PickCard, pPickCardState);
                                         }
                                     }
 
                                     break;
                                 #endregion
 
+                                #region Battle
                                 case DefinedProtocol.eFromClient.SelectAction:
 
                                     DefinedStructure.P_SelectAction pSelectAction = new DefinedStructure.P_SelectAction();
@@ -524,6 +549,7 @@ namespace Server_Scientia
                                                 DefinedStructure.P_InformRotateCard pInformRotateCard;
                                                 pInformRotateCard._index = userRotateCard._Index;
                                                 pInformRotateCard._cardArr = new int[4];
+                                                pInformRotateCard._cardRoteteInfo = new int[4];
                                                 pInformRotateCard._turnCount = 2;
 
                                                 for (int n = 0; n < userRotateCard._CardSlotCnt; n++)
@@ -537,6 +563,8 @@ namespace Server_Scientia
                                                     }
                                                     else
                                                         pInformRotateCard._cardArr[n] = -1;
+
+                                                    pInformRotateCard._cardRoteteInfo[n] = userRotateCard._RotateInfoArr[n];
                                                 }
 
                                                 SendBufferInRoom(roomSelectAction, DefinedProtocol.eToClient.RotateCard, pInformRotateCard);
@@ -559,12 +587,11 @@ namespace Server_Scientia
                                     RoomInfo roomPickCardInProgress = _roomInfoSort.GetRoom(pPickCardInProgress._roomNumber);
                                     UserInfo userPickCardInProgress = roomPickCardInProgress.SearchUser(packet._UUID);
 
-                                    DefinedStructure.P_ShowPickCard pShowPickCardInPregress;
-                                    pShowPickCardInPregress._index = userPickCardInProgress._Index;
-                                    pShowPickCardInPregress._cardIndex = pPickCardInProgress._cardIndex;
-                                    pShowPickCardInPregress._slotIndex = userPickCardInProgress.AddCard(pPickCardInProgress._cardIndex);
+                                    RenewProjectBoard(roomPickCardInProgress, pPickCardInProgress._cardIndex);
 
-                                    SendBufferInRoom(roomPickCardInProgress, DefinedProtocol.eToClient.ShowPickCard, pShowPickCardInPregress);
+                                    int slotIndex2 = userPickCardInProgress.AddCard(pPickCardInProgress._cardIndex);
+                                    RenewCardSlot(roomPickCardInProgress, userPickCardInProgress, pPickCardInProgress._cardIndex, slotIndex2);
+
                                     InformNowTurn(roomPickCardInProgress, DefinedProtocol.eToClient.ChooseAction);
 
                                     break;
@@ -608,11 +635,90 @@ namespace Server_Scientia
                                     UserInfo userChooseCompleteCard = roomChooseCompleteCard.SearchUser(packet._UUID);
 
                                     MoveCube(roomChooseCompleteCard, userChooseCompleteCard);
-                                    ApplyEffect(userChooseCompleteCard._PickedCardArr[pChooseCompleteCard._index], userChooseCompleteCard);
+                                    ApplyEffect(roomChooseCompleteCard, userChooseCompleteCard._PickedCardArr[pChooseCompleteCard._index], userChooseCompleteCard);
 
                                     CheckCompleteCard(roomChooseCompleteCard, userChooseCompleteCard);
 
                                     break;
+
+                                case DefinedProtocol.eFromClient.SelectFieldResult:
+
+                                    DefinedStructure.P_SelectFieldResult pSelectFieldResult = new DefinedStructure.P_SelectFieldResult();
+                                    pSelectFieldResult = (DefinedStructure.P_SelectFieldResult)packet.Convert(pSelectFieldResult.GetType());
+
+                                    RoomInfo roomSelectFieldResult = _roomInfoSort.GetRoom(pSelectFieldResult._roomNumber);
+                                    UserInfo userSelectFieldResult = roomSelectFieldResult.SearchUser(packet._UUID);
+
+                                    if(userSelectFieldResult._IsApplyingEffect)
+                                    {
+                                        switch(userSelectFieldResult._ApplyCard)
+                                        {
+                                            case 2:
+
+                                                if(userSelectFieldResult.CheckNotMostField(pSelectFieldResult._field))
+                                                    RenewSkillCube(roomSelectFieldResult, userSelectFieldResult, pSelectFieldResult._field);
+                                                else
+                                                {
+                                                    //TODO System Message Not Correct Select
+                                                }
+
+                                                switch (roomSelectFieldResult._Rule)
+                                                {
+                                                    case "Normal":
+
+                                                        roomSelectFieldResult._CardDeck.ReturnCard(userSelectFieldResult._ApplyCard);
+                                                        RenewProjectBoard(roomSelectFieldResult, userSelectFieldResult._ApplyCard);
+
+                                                        break;
+                                                }
+
+                                                int slotIndex = userSelectFieldResult.DeleteCard(userSelectFieldResult._ApplyCard);
+                                                DeleteCardSLot(roomSelectFieldResult, userSelectFieldResult, slotIndex);
+
+                                                userSelectFieldResult._IsApplyingEffect = false;
+                                                userSelectFieldResult._ApplyCard = -1;
+
+                                                break;
+                                        }
+                                    }
+
+                                    break;
+                                #endregion
+
+                                #region Shop
+                                case DefinedProtocol.eFromClient.RequsetShopInfo:
+
+                                    DefinedStructure.P_RequestShopInfo pRequsetShopInfo = new DefinedStructure.P_RequestShopInfo();
+                                    pRequsetShopInfo = (DefinedStructure.P_RequestShopInfo)packet.Convert(pRequsetShopInfo.GetType());
+
+                                    DefinedStructure.P_GetShopInfo pGetShopInfo;
+                                    pGetShopInfo._UUID = packet._UUID;
+                                    pGetShopInfo._nickName = pRequsetShopInfo._nickName;
+
+                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.GetShopInfo, pGetShopInfo));
+                                    Console.WriteLine("{0} 유저가 상점 정보를 요청합니다.", packet._UUID);
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.BuyItem:
+
+                                    DefinedStructure.P_BuyItem pBuyItem = new DefinedStructure.P_BuyItem();
+                                    pBuyItem = (DefinedStructure.P_BuyItem)packet.Convert(pBuyItem.GetType());
+
+                                    DefinedStructure.P_TryBuyItem pTryBuyItem;
+                                    pTryBuyItem._UUID = packet._UUID;
+                                    pTryBuyItem._nickName = pBuyItem._nickName;
+                                    pTryBuyItem._itemIndex = pBuyItem._itemIndex;
+                                    pTryBuyItem._exchangeType = _tbMgr.Get(eTableType.ItemData).ToS(pBuyItem._itemIndex, ItemData.Index.ExchangeType.ToString());
+                                    pTryBuyItem._coin = _tbMgr.Get(eTableType.ItemData).ToI(pBuyItem._itemIndex, ItemData.Index.Coin.ToString());
+                                    pTryBuyItem._coinKind = _tbMgr.Get(eTableType.ItemData).ToS(pBuyItem._itemIndex, ItemData.Index.CoinKind.ToString());
+                                    pTryBuyItem._exchangeResult = _tbMgr.Get(eTableType.ItemData).ToI(pBuyItem._itemIndex, ItemData.Index.ExchangeResult.ToString());
+
+                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.TryBuyItem, pTryBuyItem));
+                                    Console.WriteLine("{0} 유저가 {1}번 아이템 구매를 시도합니다.", pTryBuyItem._nickName, pTryBuyItem._itemIndex);
+
+                                    break;
+                                #endregion
 
                                 case DefinedProtocol.eFromClient.ConnectionTerminate:
 
@@ -882,7 +988,58 @@ namespace Server_Scientia
                                 }
 
                                 break;
-                                #endregion
+                            #endregion
+
+                            #region Shop
+                            case DefinedProtocol.eToServer.UserShopInfo:
+
+                                DefinedStructure.P_UserShopInfo pUserShopInfo = new DefinedStructure.P_UserShopInfo();
+                                pUserShopInfo = (DefinedStructure.P_UserShopInfo)tData.Convert(pUserShopInfo.GetType());
+
+                                ShowUserItem(pUserShopInfo._UUID, pUserShopInfo._itemIndex, pUserShopInfo._itemCount);
+
+                                break;
+
+                            case DefinedProtocol.eToServer.FinishUserShopInfo:
+
+                                DefinedStructure.P_FinishUserShopInfo pFinishUserShopInfo = new DefinedStructure.P_FinishUserShopInfo();
+                                pFinishUserShopInfo = (DefinedStructure.P_FinishUserShopInfo)tData.Convert(pFinishUserShopInfo.GetType());
+
+                                DefinedStructure.P_EndUserShopInfo pEndUserShopInfo;
+                                pEndUserShopInfo._coinArr = new int[6];
+                                Array.Copy(pFinishUserShopInfo._coinArr, pEndUserShopInfo._coinArr, pEndUserShopInfo._coinArr.Length);
+
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.EndUserShopInfo, pEndUserShopInfo, pFinishUserShopInfo._UUID));
+
+                                break;
+
+                            case DefinedProtocol.eToServer.ResultBuyItem:
+
+                                DefinedStructure.P_ResultBuyItem pResultBuyItem = new DefinedStructure.P_ResultBuyItem();
+                                pResultBuyItem = (DefinedStructure.P_ResultBuyItem)tData.Convert(pResultBuyItem.GetType());
+                                
+                                if (pResultBuyItem._isSuccess == 0)
+                                {
+                                    if(pResultBuyItem._exchangeType == "Item")
+                                    {
+                                        ShowUserItem(pResultBuyItem._UUID, pResultBuyItem._itemIndex, pResultBuyItem._itemCount);
+                                        ShowUserCoin(pResultBuyItem._UUID, pResultBuyItem._coinKind, pResultBuyItem._remainCoin);
+                                        Console.WriteLine("{0} 유저가 {1}번 아이템을 구매했습니다.", pResultBuyItem._UUID, pResultBuyItem._itemIndex);
+                                    }   
+                                    else
+                                    {   
+                                        ShowUserCoin(pResultBuyItem._UUID, pResultBuyItem._exchangeType, pResultBuyItem._itemCount);
+                                        ShowUserCoin(pResultBuyItem._UUID, pResultBuyItem._coinKind, pResultBuyItem._remainCoin);
+                                        Console.WriteLine("{0} 유저가 {1} 코인을 구매했습니다.", pResultBuyItem._UUID, pResultBuyItem._exchangeType);
+                                    }
+                                }
+                                else
+                                {
+                                    //TODO System Message Fail Buy Item
+                                }
+
+                                break;
+                            #endregion
                         }
                     }
 
@@ -960,7 +1117,7 @@ namespace Server_Scientia
                     selectIndex = rd.Next(0, normalCard.Count);
                 }
                 while (room._CardDeck.IsContain((eCardField)_tbMgr.Get(eTableType.CardData).ToI(normalCard[selectIndex], CardData.Index.Field.ToString()), normalCard[selectIndex])
-                        || cardArr[selectIndex] == 0);
+                        || normalCard[selectIndex] == 0);
 
                 room._CardDeck.AddCard((eCardField)_tbMgr.Get(eTableType.CardData).ToI(normalCard[selectIndex], CardData.Index.Field.ToString()), normalCard[selectIndex]);
 
@@ -1021,6 +1178,15 @@ namespace Server_Scientia
             }
         }
 
+        void RenewProjectBoard(RoomInfo room, int cardIndex)
+        {
+            room._CardDeck.PickCard(cardIndex);
+            DefinedStructure.P_ShowProjectBoard pShowProjectBoard;
+            pShowProjectBoard._cardIndex = cardIndex;
+            pShowProjectBoard._cardCount = room._CardDeck.CardCount(cardIndex);
+            SendBufferInRoom(room, DefinedProtocol.eToClient.ShowProjectBoard, pShowProjectBoard);
+        }
+
         void InformNowTurn(RoomInfo room, DefinedProtocol.eToClient protocolType)
         {
             if (++room._ThisTurn >= room._UserArr.Length)
@@ -1036,11 +1202,12 @@ namespace Server_Scientia
 
             if(room._IsFinalTurn && room._ThisTurn == room._Master)
             {
-                //TODO All Ready Release
                 for(int n = 0; n < room._UserArr.Length; n++)
                 {
                     if(room._UserArr[n] != null)
                     {
+                        room._UserArr[n]._IsReady = false;
+
                         DefinedStructure.P_GameOver pGameOver;
 
                         int count = 0;
@@ -1073,14 +1240,29 @@ namespace Server_Scientia
             }
         }
 
-        void ApplyEffect(int cardIndex, UserInfo user)
+        void ApplyEffect(RoomInfo room, int cardIndex, UserInfo user)
         {
-            switch(cardIndex)
+            Console.WriteLine("{0} 유저가 {1}번 카드의 완료 효과를 얻었습니다.", user._NickName, cardIndex);
+
+            int flask = 0;
+            switch (cardIndex)
             {
+                case 2:
+
+                    user._IsApplyingEffect = true;
+                    user._ApplyCard = cardIndex;
+                    SelectField(room, user);
+
+                    break;
+
                 case 5:
 
-                    user.AddFlaskCube(user.MaxSkillPower() / 2);
-                    //TODO Send Packet Change Value
+                    flask = user.MaxSkillPower() / 2;
+                    user.AddFlaskCube(flask);
+                    room._MaxFlaskCube -= flask;
+                    
+                    ShowUserFlaskCube(room, user);
+                    ShowTotalFlaskCube(room);
 
                     break;
 
@@ -1088,11 +1270,19 @@ namespace Server_Scientia
 
                     user.AddFlaskCube(user.AllSkillCubeCount() / 2);
 
+                    ShowUserFlaskCube(room, user);
+
                     break;
 
                 case 29:
 
-                    user.AddFlaskCube(user.MyCardCount());
+                    flask = user.MyCardCount();
+                    user.AddFlaskCube(flask);
+                    room._MaxFlaskCube -= flask;
+
+                    ShowUserFlaskCube(room, user);
+                    ShowTotalFlaskCube(room);
+
                     //TODO Get One Card
 
                     break;
@@ -1128,27 +1318,162 @@ namespace Server_Scientia
                 else
                 {
                     MoveCube(room, user);
-                    ApplyEffect(user.GetCompleteCard(), user);
+
+                    int completeCard = user.GetCompleteCard();
+                    string applyText = _tbMgr.Get(eTableType.CardData).ToS(completeCard, CardData.Index.Apply.ToString());
+
+                    switch(applyText)
+                    {
+                        case "Now":
+
+                            ApplyEffect(room, completeCard, user);
+
+                            break;
+
+                        case "Later":
+
+                            ApplyEffect(room, completeCard, user);
+
+                            return;
+                    }
+
+                    switch(room._Rule)
+                    {
+                        case "Normal":
+
+                            room._CardDeck.ReturnCard(completeCard);
+                            RenewProjectBoard(room, completeCard);
+
+                            break;
+                    }
+
+                    int slotIndex = user.DeleteCard(completeCard);
+                    DeleteCardSLot(room, user, slotIndex);
                 }
             }
-            else
-                InformNowTurn(room, DefinedProtocol.eToClient.ChooseAction);
+
+            InformNowTurn(room, DefinedProtocol.eToClient.ChooseAction);
         }
 
         void MoveCube(RoomInfo room, UserInfo user)
         {
             int completeCardIndex = user.GetCompleteCard();
-            if (room._CardDeck.GetFlaskOnCard(completeCardIndex) > 0)
+            int flaskCnt = 0;
+            if (room._CardDeck.GetFlaskOnCard(completeCardIndex, out flaskCnt))
             {
-                //TODO Move Flask Cube
+                user._FlaskCubeCnt += flaskCnt;
+                Console.WriteLine("{0} 유저가 {1} 카드 위에 있는 플라스크 큐브 {2}개를 자신의 슬롯으로 옮겼습니다.", user._NickName, completeCardIndex, flaskCnt);
+
+                ShowTotalFlaskCube(room);
+
+                ShowUserFlaskCube(room, user);
+
                 if (!user._IsFlaskEffect && user._FlaskCubeCnt >= 5)
+                {
                     user.AddCardSlot();
+                    ShowSlot(room, user);
+                }   
             }
 
-            user.MoveSkillCube((eCardField)_tbMgr.Get(eTableType.CardData).ToI(completeCardIndex, CardData.Index.Field.ToString()));
+            RenewSkillCube(room, user, _tbMgr.Get(eTableType.CardData).ToI(completeCardIndex, CardData.Index.Field.ToString()));
+        }
+
+        void ShowSlot(RoomInfo room, UserInfo user)
+        {
+            DefinedStructure.P_ShowUserSlot pShowUserSlot;
+            pShowUserSlot._index = user._Index;
+            pShowUserSlot._unLockSlot = user._UnLockSlotCnt;
+
+            SendBufferInRoom(room, DefinedProtocol.eToClient.ShowUserSlot, pShowUserSlot);
+        }
+
+        void ShowUserFlaskCube(RoomInfo room, UserInfo user)
+        {
+            DefinedStructure.P_ShowUserFlask pShowUserFlask;
+            pShowUserFlask._index = user._Index;
+            pShowUserFlask._userFlask = user._FlaskCubeCnt;
+            SendBufferInRoom(room, DefinedProtocol.eToClient.ShowUserFlask, pShowUserFlask);
+        }
+
+        void ShowTotalFlaskCube(RoomInfo room)
+        {
+            DefinedStructure.P_ShowTotalFlask pShowTotalFlask;
+            pShowTotalFlask._totalFlask = room._MaxFlaskCube;
+            SendBufferInRoom(room, DefinedProtocol.eToClient.ShowTotalFlask, pShowTotalFlask);
+        }
+
+        void RenewCardSlot(RoomInfo room, UserInfo user, int cardIndex, int slotIndex)
+        {
+            DefinedStructure.P_ShowPickCard pShowPickCard;
+            pShowPickCard._index = user._Index;
+            pShowPickCard._cardIndex = cardIndex;
+            pShowPickCard._slotIndex = slotIndex;
+
+            SendBufferInRoom(room, DefinedProtocol.eToClient.ShowPickCard, pShowPickCard);
+        }
+
+        void DeleteCardSLot(RoomInfo room, UserInfo user, int slotIndex)
+        {
+            DefinedStructure.P_DeletePickCard pDeletePickCard;
+            pDeletePickCard._index = user._Index;
+            pDeletePickCard._slotIndex = slotIndex;
+
+            SendBufferInRoom(room, DefinedProtocol.eToClient.DeletePickCard, pDeletePickCard);
+        }
+
+        void SelectField(RoomInfo room, UserInfo user)
+        {
+            DefinedStructure.P_SelectField pSelectField;
+            pSelectField._userIndex = user._Index;
+
+            SendBufferInRoom(room, DefinedProtocol.eToClient.SelectField, pSelectField);
+        }
+
+        void RenewSkillCube(RoomInfo room, UserInfo user, int field)
+        {
+            if (user.MoveSkillCube((eCardField)field))
+            {
+                DefinedStructure.P_ShowTotalSkill pShowTotalSkill;
+                pShowTotalSkill._totalSkill = room._MaxSkillCube;
+                SendBufferInRoom(room, DefinedProtocol.eToClient.ShowTotalSkill, pShowTotalSkill);
+            }
+
+            DefinedStructure.P_ShowUserSkill pShowUserSkill;
+            pShowUserSkill._index = user._Index;
+            pShowUserSkill._field = field;
+            pShowUserSkill._userSkill = user.AllSkillCubeCount();
+            pShowUserSkill._userSkillPos = new int[5];
+            int[] userskill = user.SkillCubePos((eCardField)pShowUserSkill._field);
+            for (int n = 0; n < userskill.Length; n++)
+                pShowUserSkill._userSkillPos[n] = userskill[n];
+            SendBufferInRoom(room, DefinedProtocol.eToClient.ShowUserSkill, pShowUserSkill);
+
+            Console.WriteLine("{0} 유저가 스킬 큐브를 옮겼습니다.", user._NickName);
+            Console.WriteLine("스킬 큐브의 위치 : {0} // {1} // {2} // {3} // {4}", userskill[0], userskill[1], userskill[2], userskill[3], userskill[4]);
 
             if (!user._IsSkillEffect && user.AllSkillCubeCount() >= 5)
+            {
                 user.AddCardSlot();
+                ShowSlot(room, user);
+            }
+        }
+
+        void ShowUserItem(long uuid, int itemIndex, int itemCnt)
+        {
+            DefinedStructure.P_ShowShopInfo pShowShopInfo;
+            pShowShopInfo._itemIndex = itemIndex;
+            pShowShopInfo._itemCount = itemCnt;
+
+            _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowUserShopInfo, pShowShopInfo, uuid));
+        }
+
+        void ShowUserCoin(long uuid, string coinType, int coinValue)
+        {
+            DefinedStructure.P_ShowCoinInfo pShowCoinInfo;
+            pShowCoinInfo._coinIndex = (int)(eCoinType)Enum.Parse(typeof(eCoinType), coinType);
+            pShowCoinInfo._coinValue = coinValue;
+
+            _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowCoinInfo, pShowCoinInfo, uuid));
         }
 
         public void MainLoop()

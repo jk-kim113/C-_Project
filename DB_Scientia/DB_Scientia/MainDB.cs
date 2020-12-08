@@ -196,6 +196,7 @@ namespace DB_Scientia
                                 break;
                             #endregion
 
+                            #region Battle
                             case DefinedProtocol.eFromServer.GetBattleInfo:
 
                                 DefinedStructure.P_GetBattleInfo pGetBattleInfo = new DefinedStructure.P_GetBattleInfo();
@@ -211,6 +212,25 @@ namespace DB_Scientia
                                 pGetAllCard = (DefinedStructure.P_GetAllCard)ConvertPacket.ByteArrayToStructure(packet._data, pGetAllCard.GetType(), packet._totalSize);
 
                                 GetAllCard(pGetAllCard._roomNumber, pGetAllCard._nickNameArr);
+
+                                break;
+                            #endregion
+
+                            case DefinedProtocol.eFromServer.GetShopInfo:
+
+                                DefinedStructure.P_GetShopInfo pGetShopInfo = new DefinedStructure.P_GetShopInfo();
+                                pGetShopInfo = (DefinedStructure.P_GetShopInfo)ConvertPacket.ByteArrayToStructure(packet._data, pGetShopInfo.GetType(), packet._totalSize);
+
+                                GetShopInfo(pGetShopInfo._UUID, pGetShopInfo._nickName);
+
+                                break;
+
+                            case DefinedProtocol.eFromServer.TryBuyItem:
+
+                                DefinedStructure.P_TryBuyItem pTryBuyItem = new DefinedStructure.P_TryBuyItem();
+                                pTryBuyItem = (DefinedStructure.P_TryBuyItem)ConvertPacket.ByteArrayToStructure(packet._data, pTryBuyItem.GetType(), packet._totalSize);
+
+                                BuyItem(pTryBuyItem._UUID, pTryBuyItem._nickName, pTryBuyItem._itemIndex, pTryBuyItem._exchangeType, pTryBuyItem._coin, pTryBuyItem._coinKind, pTryBuyItem._exchangeResult);
 
                                 break;
                         }
@@ -443,6 +463,78 @@ namespace DB_Scientia
                 pShowAllCard._cardArr[n] = allcard[n];
 
             ToPacket(DefinedProtocol.eToServer.ShowAllCard, pShowAllCard);
+        }
+
+        void GetShopInfo(long uuid, string nickName)
+        {
+            Dictionary<int, int> itemDic = new Dictionary<int, int>();
+            _dbQuery.SearchShopInfo(nickName, itemDic);
+
+            foreach(int key in itemDic.Keys)
+            {
+                DefinedStructure.P_UserShopInfo pUserShopInfo;
+                pUserShopInfo._UUID = uuid;
+                pUserShopInfo._itemIndex = key;
+                pUserShopInfo._itemCount = itemDic[key];
+
+                ToPacket(DefinedProtocol.eToServer.UserShopInfo, pUserShopInfo);
+            }
+
+            List<int> coinList = new List<int>();
+            _dbQuery.SearchCoin(nickName, coinList);
+
+            DefinedStructure.P_FinishUserShopInfo pFinishUserShopInfo;
+            pFinishUserShopInfo._UUID = uuid;
+            pFinishUserShopInfo._coinArr = new int[6];
+            for (int n = 0; n < coinList.Count; n++)
+                pFinishUserShopInfo._coinArr[n] = coinList[n];
+
+            ToPacket(DefinedProtocol.eToServer.FinishUserShopInfo, pFinishUserShopInfo);
+        }
+
+        void BuyItem(long uuid, string nickName, int itemIndex, string exchangeType, int coin, string coinKind, int exchangeResult)
+        {
+            int savedCoin = _dbQuery.SearchSavedCoin(nickName, coinKind);
+
+            DefinedStructure.P_ResultBuyItem pResultBuyItem;
+            pResultBuyItem._UUID = uuid;
+            pResultBuyItem._itemIndex = itemIndex;
+            pResultBuyItem._exchangeType = exchangeType;
+            pResultBuyItem._coinKind = coinKind;
+
+            if (coin <= savedCoin)
+            {
+                int exchange = savedCoin - coin;
+                _dbQuery.UpdateCoinValue(nickName, coinKind, exchange);
+
+                if(exchangeType == "Item")
+                {
+                    int savedItemCnt = 0;
+                    if(_dbQuery.SearchItemCount(nickName, itemIndex, out savedItemCnt))
+                        _dbQuery.UpdateItemCount(nickName, itemIndex, savedItemCnt + 1);
+                    else
+                        _dbQuery.InsertItem(nickName, itemIndex);
+
+                    pResultBuyItem._itemCount = savedItemCnt + 1;
+                }
+                else
+                {
+                    int savedCoinValue = _dbQuery.SearchSavedCoin(nickName, exchangeType);
+                    _dbQuery.UpdateCoinValue(nickName, exchangeType, exchangeResult + savedCoinValue);
+                    pResultBuyItem._itemCount = exchangeResult + savedCoinValue;
+                }   
+
+                pResultBuyItem._isSuccess = 0;
+                pResultBuyItem._remainCoin = exchange;
+            }
+            else
+            {
+                pResultBuyItem._isSuccess = 1;
+                pResultBuyItem._itemCount = 0;
+                pResultBuyItem._remainCoin = 0;
+            }   
+
+            ToPacket(DefinedProtocol.eToServer.ResultBuyItem, pResultBuyItem);
         }
 
         void ToPacket(DefinedProtocol.eToServer toServer, object str)

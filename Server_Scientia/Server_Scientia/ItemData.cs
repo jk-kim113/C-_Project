@@ -7,14 +7,15 @@ using SimpleJSON;
 
 namespace Server_Scientia
 {
-    class CardData : TableBase
+    class ItemData : TableBase
     {
         public enum Index
         {
             Index,
-            Kind,
-            Field,
-            Apply,
+            ExchangeType,
+            Coin,
+            CoinKind,
+            ExchangeResult,
 
             max
         }

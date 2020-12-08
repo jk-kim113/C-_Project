@@ -30,6 +30,9 @@ namespace Server_Scientia
             RotateInfo,
             FinishRotate,
             ChooseCompleteCard,
+            SelectFieldResult,
+            RequsetShopInfo,
+            BuyItem,
 
             ConnectionTerminate,
 
@@ -56,12 +59,24 @@ namespace Server_Scientia
             GameStart,
             ShowPickedCard,
             PickCard,
+            ShowProjectBoard,
             ShowPickCard,
+            DeletePickCard,
             ChooseAction,
             GetCard,
             RotateCard,
             ShowRotateInfo,
             SelectCompleteCard,
+            ShowTotalFlask,
+            ShowUserFlask,
+            ShowTotalSkill,
+            ShowUserSkill,
+            ShowUserSlot,
+            SelectField,
+            ShowUserShopInfo,
+            EndUserShopInfo,
+            ShowCoinInfo,
+
             GameOver,
 
             ConfirmTerminate,
@@ -81,6 +96,8 @@ namespace Server_Scientia
             AddReleaseCard,
             GetBattleInfo,
             GetAllCard,
+            GetShopInfo,
+            TryBuyItem,
 
             max
         }
@@ -98,6 +115,9 @@ namespace Server_Scientia
             CompleteAddReleaseCard,
             ShowBattleInfo,
             ShowAllCard,
+            UserShopInfo,
+            FinishUserShopInfo,
+            ResultBuyItem,
 
             max
         }

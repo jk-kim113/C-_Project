@@ -41,9 +41,15 @@ namespace Server_Scientia
         public int _UnLockSlotCnt { get { return _unLockSlotCnt; } }
         public int[] _RotateInfoArr { get { return _rotateInfoArr; } }
         public int _NowCardCnt { get { return _currentCardCnt; } }
-        public int _FlaskCubeCnt { get { return _flaskCubeCnt; } }
+        public int _FlaskCubeCnt { get { return _flaskCubeCnt; } set { _flaskCubeCnt = value; } }
         public bool _IsFlaskEffect { get { return _isFlaskEffect; } }
         public bool _IsSkillEffect { get { return _isSkillEffect; } }
+
+        int _applyCard;
+        bool _isApplyingEffect;
+
+        public int _ApplyCard { get { return _applyCard; } set { _applyCard = value; } }
+        public bool _IsApplyingEffect { get { return _isApplyingEffect; } set { _isApplyingEffect = value; } }
 
         const int _maxSkillMove = 4;
         Dictionary<eCardField, List<SkillCube>> _skillPowerCnt = new Dictionary<eCardField, List<SkillCube>>();
@@ -59,6 +65,9 @@ namespace Server_Scientia
             _currentCardCnt = 0;
 
             _room = room;
+
+            for (int n = 0; n < (int)eCardField.max; n++)
+                _skillPowerCnt.Add((eCardField)n, new List<SkillCube>());
         }
 
         public bool IsEmptyCardSlot()
@@ -82,6 +91,22 @@ namespace Server_Scientia
             }   
 
             return emptySlot;
+        }
+
+        public int DeleteCard(int cardIndex)
+        {
+            for (int n = 0; n < _unLockSlotCnt; n++)
+            {
+                if (_pickedCardArr[n] == cardIndex)
+                {
+                    _pickedCardArr[n] = 0;
+                    _rotateInfoArr[n] = 0;
+                    _currentCardCnt--;
+                    return n;
+                }
+            }
+
+            return -1;
         }
 
         bool EmptyCardSlotIndex(out int index)
@@ -180,7 +205,16 @@ namespace Server_Scientia
             return 0;
         }
 
-        public void MoveSkillCube(eCardField field)
+        public void InitSkillCube()
+        {
+            foreach(eCardField field in _skillPowerCnt.Keys)
+            {
+                _skillPowerCnt[field].Add(new SkillCube());
+                Console.WriteLine("{0} 유저의 {1} 분야 카드 수 : {2}",_nickName, field, _skillPowerCnt[field].Count);
+            }
+        }
+
+        public bool MoveSkillCube(eCardField field)
         {
             for(int n = 0; n < _skillPowerCnt[field].Count; n++)
             {
@@ -193,15 +227,20 @@ namespace Server_Scientia
                         if(_room._MaxSkillCube > 0)
                         {
                             _skillPowerCnt[field].Add(new SkillCube());
+                            Console.WriteLine("새로운 스킬 큐브를 추가 하였습니다");
                             if (--_room._MaxSkillCube <= 0)
                                 _room._IsFinalTurn = true;
-                        }
-                            
+
+                            return true;
+                        }   
                     }
 
+                    Console.WriteLine("{0} 분야의 스킬이 {1}로 증가 했습니다", field, _skillPowerCnt[field][n]._Position);
                     break;
                 }
             }
+
+            return false;
         }
 
         public bool IsPhysicsSpecificScore(out int count)
@@ -220,6 +259,51 @@ namespace Server_Scientia
                 return true;
             else
                 return false;
+        }
+
+        public int[] SkillCubePos(eCardField field)
+        {
+            int[] skillcubePos = new int[5];
+
+            for(int n = 0; n < _skillPowerCnt[field].Count; n++)
+            {
+                skillcubePos[_skillPowerCnt[field][n]._Position] = 1;
+            }
+
+            return skillcubePos;
+        }
+
+        public bool CheckNotMostField(int field)
+        {
+            int mostSkll = MaxSkillPower();
+
+            int cnt = 0;
+            foreach(eCardField fieldkey in _skillPowerCnt.Keys)
+            {
+                if (FieldSkillPower(fieldkey) == mostSkll)
+                {
+                    cnt++;
+
+                    if (cnt >= _skillPowerCnt.Count)
+                        return true;
+                }
+                else
+                    break;
+            }
+
+            if (mostSkll > FieldSkillPower((eCardField)field))
+                return true;
+
+            return false;
+        }
+
+        int FieldSkillPower(eCardField field)
+        {
+            int temp = 0;
+            for (int n = 0; n < _skillPowerCnt[field].Count; n++)
+                temp += _skillPowerCnt[field][n]._Position;
+
+            return temp;
         }
 
         internal class SkillCube

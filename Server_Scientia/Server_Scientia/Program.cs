@@ -12,6 +12,7 @@ namespace Server_Scientia
         static void Main(string[] args)
         {
             MainServer server = new MainServer();
+            //server.Test();
 
             server.MainLoop();
 

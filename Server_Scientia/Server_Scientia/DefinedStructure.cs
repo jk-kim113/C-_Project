@@ -151,6 +151,22 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _index;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_RequestShopInfo
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_BuyItem
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemIndex;
+        }
         #endregion
 
         #region ToClient
@@ -255,6 +271,15 @@ namespace Server_Scientia
         }
 
         [StructLayout(LayoutKind.Sequential)]
+        public struct P_GameStart
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _skilcubeCnt;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _flaskcubeCnt;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         public struct P_PickedCard
         {
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
@@ -269,12 +294,30 @@ namespace Server_Scientia
         }
 
         [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowProjectBoard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _cardIndex;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _cardCount;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         public struct P_ShowPickCard
         {
             [MarshalAs(UnmanagedType.I4)]
             public int _index;
             [MarshalAs(UnmanagedType.I4)]
             public int _cardIndex;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _slotIndex;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_DeletePickCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
             [MarshalAs(UnmanagedType.I4)]
             public int _slotIndex;
         }
@@ -293,6 +336,8 @@ namespace Server_Scientia
             public int _index;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
             public int[] _cardArr;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+            public int[] _cardRoteteInfo;
             [MarshalAs(UnmanagedType.I4)]
             public int _turnCount;
         }
@@ -318,10 +363,96 @@ namespace Server_Scientia
         }
 
         [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowTotalFlask
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _totalFlask;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowUserFlask
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _userFlask;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowTotalSkill
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _totalSkill;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowUserSkill
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _field;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _userSkill;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
+            public int[] _userSkillPos;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowUserSlot
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _unLockSlot;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_SelectField
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _userIndex;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_SelectFieldResult
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _roomNumber;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _field;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         public struct P_GameOver
         {
             [MarshalAs(UnmanagedType.I4)]
             public int _specificScore;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowShopInfo
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemIndex;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemCount;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_EndUserShopInfo
+        {
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
+            public int[] _coinArr;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowCoinInfo
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _coinIndex;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _coinValue;
         }
         #endregion
 
@@ -395,6 +526,34 @@ namespace Server_Scientia
             public int _roomNumber;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
             public string _nickNameArr;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_GetShopInfo
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_TryBuyItem
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemIndex;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _exchangeType;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _coin;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _coinKind;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _exchangeResult;
         }
         #endregion
 
@@ -486,6 +645,45 @@ namespace Server_Scientia
             public int[] _cardArr;
             [MarshalAs(UnmanagedType.I4)]
             public int _cardCount;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_UserShopInfo
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemIndex;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemCount;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_FinishUserShopInfo
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
+            public int[] _coinArr;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ResultBuyItem
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemIndex;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _isSuccess;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _exchangeType;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _itemCount;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _coinKind;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _remainCoin;
         }
         #endregion
     }
