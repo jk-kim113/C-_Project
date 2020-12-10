@@ -255,5 +255,35 @@ namespace DB_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _remainCoin;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_GetFriendList
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_UserFriendList
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _friendNickName;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+            public int[] _friendLevel;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _receiveNickName;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+            public int[] _receiveLevel;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _withNickName;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+            public int[] _withLevel;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _withDate;
+        }
     }
 }

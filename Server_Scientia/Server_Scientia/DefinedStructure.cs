@@ -167,6 +167,13 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _itemIndex;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_RequestFriendList
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+        }
         #endregion
 
         #region ToClient
@@ -454,6 +461,25 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.I4)]
             public int _coinValue;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowFriendList
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _friendNickName;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+            public int[] _friendLevel;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _receiveNickName;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+            public int[] _receiveLevel;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _withNickName;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+            public int[] _withLevel;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _withDate;
+        }
         #endregion
 
         #region FromServer
@@ -554,6 +580,15 @@ namespace Server_Scientia
             public string _coinKind;
             [MarshalAs(UnmanagedType.I4)]
             public int _exchangeResult;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_GetFriendList
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
         }
         #endregion
 
@@ -684,6 +719,27 @@ namespace Server_Scientia
             public string _coinKind;
             [MarshalAs(UnmanagedType.I4)]
             public int _remainCoin;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_UserFriendList
+        {
+            [MarshalAs(UnmanagedType.I8)]
+            public long _UUID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _friendNickName;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+            public int[] _friendLevel;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _receiveNickName;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+            public int[] _receiveLevel;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _withNickName;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+            public int[] _withLevel;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _withDate;
         }
         #endregion
     }

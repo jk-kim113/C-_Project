@@ -22,6 +22,7 @@ namespace DB_Scientia
             GetAllCard,
             GetShopInfo,
             TryBuyItem,
+            GetFriendList,
 
             max
         }
@@ -42,6 +43,7 @@ namespace DB_Scientia
             UserShopInfo,
             FinishUserShopInfo,
             ResultBuyItem,
+            ResultFriendList,
 
             max
         }

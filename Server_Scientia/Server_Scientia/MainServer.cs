@@ -720,6 +720,20 @@ namespace Server_Scientia
                                     break;
                                 #endregion
 
+                                case DefinedProtocol.eFromClient.RequestFriendList:
+
+                                    DefinedStructure.P_RequestFriendList pRequestFriendList = new DefinedStructure.P_RequestFriendList();
+                                    pRequestFriendList = (DefinedStructure.P_RequestFriendList)packet.Convert(pRequestFriendList.GetType());
+
+                                    DefinedStructure.P_GetFriendList pGetFriendList;
+                                    pGetFriendList._UUID = packet._UUID;
+                                    pGetFriendList._nickName = pRequestFriendList._nickName;
+
+                                    _fromServerQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eFromServer.GetFriendList, pGetFriendList));
+                                    Console.WriteLine("{0} 유저가 친구 목록을 불러오는 중입니다.", pGetFriendList._nickName);
+
+                                    break;
+
                                 case DefinedProtocol.eFromClient.ConnectionTerminate:
 
                                     Console.WriteLine("{0} 유저가 접속 종료를 시도합니다.", packet._UUID);
@@ -1040,6 +1054,27 @@ namespace Server_Scientia
 
                                 break;
                             #endregion
+
+                            case DefinedProtocol.eToServer.ResultFriendList:
+
+                                DefinedStructure.P_UserFriendList pUserFriendList = new DefinedStructure.P_UserFriendList();
+                                pUserFriendList = (DefinedStructure.P_UserFriendList)tData.Convert(pUserFriendList.GetType());
+
+                                DefinedStructure.P_ShowFriendList pShowFriendList;
+                                pShowFriendList._friendNickName = pUserFriendList._friendNickName;
+                                pShowFriendList._friendLevel = new int[10];
+                                Array.Copy(pUserFriendList._friendLevel, pShowFriendList._friendLevel, pShowFriendList._friendLevel.Length);
+                                pShowFriendList._receiveNickName = pUserFriendList._receiveNickName;
+                                pShowFriendList._receiveLevel = new int[10];
+                                Array.Copy(pUserFriendList._receiveLevel, pShowFriendList._receiveLevel, pShowFriendList._receiveLevel.Length);
+                                pShowFriendList._withNickName = pUserFriendList._withNickName;
+                                pShowFriendList._withLevel = new int[10];
+                                Array.Copy(pUserFriendList._withLevel, pShowFriendList._withLevel, pShowFriendList._withLevel.Length);
+                                pShowFriendList._withDate = pUserFriendList._withDate;
+
+                                _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowFriendList, pShowFriendList, pUserFriendList._UUID));
+
+                                break;
                         }
                     }
 

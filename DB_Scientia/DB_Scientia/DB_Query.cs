@@ -725,6 +725,125 @@ namespace DB_Scientia
             }
         }
 
+        public void SearchMyFriend(string nickName, Dictionary<string, int> temp)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT fi.FriendNickName,ci.AccountLevel " +
+                                                "FROM (SELECT FriendNickName FROM friendinfo WHERE NickName = '{0}') fi," +
+                                                "(SELECT AccountLevel FROM characterinfo WHERE NickName = (SELECT FriendNickName FROM friendinfo WHERE NickName = '{1}')) ci;", nickName, nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        temp.Add(table["FriendNickName"].ToString(), int.Parse(table["AccountLevel"].ToString()));
+
+                        Console.WriteLine("============================MyFriend List============================");
+                        Console.Write(table["FriendNickName"].ToString() + "\t");
+                        Console.WriteLine(table["AccountLevel"].ToString());
+                    }
+
+                    table.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public void SearchReceiveFriend(string nickName, Dictionary<string, int> temp)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT fi.FriendNickName,ci.AccountLevel " +
+                                                "FROM (SELECT FriendNickName FROM receivefriendinfo WHERE NickName = '{0}') fi," +
+                                                "(SELECT AccountLevel FROM characterinfo WHERE NickName = (SELECT FriendNickName FROM receivefriendinfo WHERE NickName = '{1}')) ci;", nickName, nickName);
+
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        temp.Add(table["FriendNickName"].ToString(), int.Parse(table["AccountLevel"].ToString()));
+
+                        Console.WriteLine("============================Receive Friend List============================");
+                        Console.Write(table["FriendNickName"].ToString() + "\t");
+                        Console.WriteLine(table["AccountLevel"].ToString());
+                    }
+
+                    table.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
+        public void SearchWithFriend(string nickName, Dictionary<string, int> temp, List<string> remainTime)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string searchQuery = string.Format("SELECT fi.OpponentNickName,fi.PlayDate,ci.AccountLevel " +
+                                                "FROM (SELECT OpponentNickName,PlayDate FROM playwithinfo WHERE NickName = '{0}') fi," +
+                                                "(SELECT AccountLevel FROM characterinfo WHERE NickName = (SELECT OpponentNickName FROM playwithinfo WHERE NickName = '{1}')) ci;", nickName, nickName);
+                
+                try
+                {
+                    MySqlCommand command = new MySqlCommand(searchQuery, connection);
+
+                    MySqlDataReader table = command.ExecuteReader();
+
+                    while (table.Read())
+                    {
+                        temp.Add(table["OpponentNickName"].ToString(), int.Parse(table["AccountLevel"].ToString()));
+                        remainTime.Add(table["PlayDate"].ToString());
+
+                        Console.WriteLine("============================Play With Friend List============================");
+                        Console.Write(table["OpponentNickName"].ToString() + "\t");
+                        Console.Write(table["PlayDate"].ToString() + "\t");
+                        Console.WriteLine(table["AccountLevel"].ToString());
+                    }
+
+                    table.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("연결 실패!!");
+                    Console.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
+
         public bool InsertUserInfo(string id, string pw)
         {
             using (MySqlConnection connection = new MySqlConnection(_connectionString))

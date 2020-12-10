@@ -11,7 +11,7 @@ namespace DB_Scientia
         static void Main(string[] args)
         {
             MainDB db = new MainDB();
-
+            //db.Test();
             db.MainLoop();
 
             string exitOrder = string.Empty;

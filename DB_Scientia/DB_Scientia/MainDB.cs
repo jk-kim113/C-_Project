@@ -43,6 +43,11 @@ namespace DB_Scientia
             _dbQuery = new DB_Query("127.0.0.1", "3306", "mydb", "root", "1234");
         }
 
+        public void Test()
+        {
+            GetFriendList(100000001, "User1");
+        }
+
         void CreateServer()
         {
             try
@@ -216,6 +221,7 @@ namespace DB_Scientia
                                 break;
                             #endregion
 
+                            #region Shop
                             case DefinedProtocol.eFromServer.GetShopInfo:
 
                                 DefinedStructure.P_GetShopInfo pGetShopInfo = new DefinedStructure.P_GetShopInfo();
@@ -231,6 +237,16 @@ namespace DB_Scientia
                                 pTryBuyItem = (DefinedStructure.P_TryBuyItem)ConvertPacket.ByteArrayToStructure(packet._data, pTryBuyItem.GetType(), packet._totalSize);
 
                                 BuyItem(pTryBuyItem._UUID, pTryBuyItem._nickName, pTryBuyItem._itemIndex, pTryBuyItem._exchangeType, pTryBuyItem._coin, pTryBuyItem._coinKind, pTryBuyItem._exchangeResult);
+
+                                break;
+                            #endregion
+
+                            case DefinedProtocol.eFromServer.GetFriendList:
+
+                                DefinedStructure.P_GetFriendList pGetFriendList = new DefinedStructure.P_GetFriendList();
+                                pGetFriendList = (DefinedStructure.P_GetFriendList)ConvertPacket.ByteArrayToStructure(packet._data, pGetFriendList.GetType(), packet._totalSize);
+
+                                GetFriendList(pGetFriendList._UUID, pGetFriendList._nickName);
 
                                 break;
                         }
@@ -535,6 +551,58 @@ namespace DB_Scientia
             }   
 
             ToPacket(DefinedProtocol.eToServer.ResultBuyItem, pResultBuyItem);
+        }
+
+        void GetFriendList(long uuid, string nickName)
+        {
+            Dictionary<string, int> temp = new Dictionary<string, int>();
+            DefinedStructure.P_UserFriendList pUserFriendList;
+            pUserFriendList._UUID = uuid;
+            pUserFriendList._friendNickName = string.Empty;
+            pUserFriendList._friendLevel = new int[10];
+            pUserFriendList._receiveNickName = string.Empty;
+            pUserFriendList._receiveLevel = new int[10];
+            pUserFriendList._withNickName = string.Empty;
+            pUserFriendList._withLevel = new int[10];
+            pUserFriendList._withDate = string.Empty;
+
+            _dbQuery.SearchMyFriend(nickName, temp);
+            int n = 0;
+            foreach(string key in temp.Keys)
+            {
+                pUserFriendList._friendNickName += key + ",";
+                pUserFriendList._friendLevel[n++] = temp[key];
+            }
+
+            n = 0;
+            temp.Clear();
+            _dbQuery.SearchReceiveFriend(nickName, temp);
+            foreach (string key in temp.Keys)
+            {
+                pUserFriendList._receiveNickName += key + ",";
+                pUserFriendList._receiveLevel[n++] = temp[key];
+            }
+
+            n = 0;
+            temp.Clear();
+            List<string> remainTime = new List<string>();
+            _dbQuery.SearchWithFriend(nickName, temp, remainTime);
+
+            foreach (string key in temp.Keys)
+            {
+                pUserFriendList._withNickName += key + ",";
+                pUserFriendList._withLevel[n++] = temp[key];
+            }
+
+            for (int m = 0; m < remainTime.Count; m++)
+                pUserFriendList._withDate += remainTime[m] + ",";
+
+            ToPacket(DefinedProtocol.eToServer.ResultFriendList, pUserFriendList);
+
+            //Console.WriteLine(DateTime.Now);
+            //Console.WriteLine(remainTime[0]);
+            //TimeSpan timeSpan = DateTime.Now - DateTime.Parse(remainTime[0]);
+            //Console.WriteLine(timeSpan);
         }
 
         void ToPacket(DefinedProtocol.eToServer toServer, object str)

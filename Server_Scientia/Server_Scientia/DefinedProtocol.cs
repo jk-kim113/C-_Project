@@ -33,6 +33,7 @@ namespace Server_Scientia
             SelectFieldResult,
             RequsetShopInfo,
             BuyItem,
+            RequestFriendList,
 
             ConnectionTerminate,
 
@@ -76,6 +77,7 @@ namespace Server_Scientia
             ShowUserShopInfo,
             EndUserShopInfo,
             ShowCoinInfo,
+            ShowFriendList,
 
             GameOver,
 
@@ -98,6 +100,7 @@ namespace Server_Scientia
             GetAllCard,
             GetShopInfo,
             TryBuyItem,
+            GetFriendList,
 
             max
         }
@@ -118,6 +121,7 @@ namespace Server_Scientia
             UserShopInfo,
             FinishUserShopInfo,
             ResultBuyItem,
+            ResultFriendList,
 
             max
         }
