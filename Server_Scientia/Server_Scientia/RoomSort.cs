@@ -42,6 +42,17 @@ namespace Server_Scientia
             return new RoomInfo();
         }
 
+        public RoomInfo QuickEnter(string mode)
+        {
+            for(int n = 0; n < _roomInfoDic[mode].Count; n++)
+            {
+                if (!_roomInfoDic[mode][n]._IsPlay && _roomInfoDic[mode][n]._NowMemeberCnt < 4)
+                    return _roomInfoDic[mode][n];
+            }
+
+            return null;
+        }
+
         void HeapSort(string mode)
         {
             for (int n = (_roomInfoDic[mode].Count - 1) / 2; n >= 0; --n)

@@ -345,6 +345,19 @@ namespace Server_Scientia
                                     GetBattleInfo(pTryEnterRoom._roomNumber, packet._UUID, pTryEnterRoom._nickName);
 
                                     break;
+
+                                case DefinedProtocol.eFromClient.QuickEnter:
+
+                                    DefinedStructure.P_QuickEnter pQuickEnter = new DefinedStructure.P_QuickEnter();
+                                    pQuickEnter = (DefinedStructure.P_QuickEnter)packet.Convert(pQuickEnter.GetType());
+
+                                    RoomInfo roomQuickEnter = _roomInfoSort.QuickEnter(pQuickEnter._quickMode);
+                                    if(roomQuickEnter != null)
+                                        GetBattleInfo(roomQuickEnter._RoomNumber, packet._UUID, pQuickEnter._nickName);
+                                    else
+                                        ShowSystemMessage(packet._UUID, "No_Room");
+
+                                    break;
                                 #endregion
 
                                 #region Game Ready
@@ -529,14 +542,10 @@ namespace Server_Scientia
                                                     SendBufferInRoom(roomSelectAction, DefinedProtocol.eToClient.GetCard, pGetCard);
                                                 }
                                                 else
-                                                {
-                                                    //TODO Send Packet SystemMessage no card slot
-                                                }
+                                                    ShowSystemMessage(packet._UUID, "No_CardSlot");
                                             }
                                             else
-                                            {
-                                                //TODO Send Packet SystemMessage no card
-                                            }
+                                                ShowSystemMessage(packet._UUID, "No_Card");
 
                                             break;
 
@@ -570,9 +579,7 @@ namespace Server_Scientia
                                                 SendBufferInRoom(roomSelectAction, DefinedProtocol.eToClient.RotateCard, pInformRotateCard);
                                             }
                                             else
-                                            {
-                                                //TODO Send Packet SystemMessage no rotatable card
-                                            }
+                                                ShowSystemMessage(packet._UUID, "No_RotatableCard");
 
                                             break;
                                     }
@@ -658,9 +665,7 @@ namespace Server_Scientia
                                                 if(userSelectFieldResult.CheckNotMostField(pSelectFieldResult._field))
                                                     RenewSkillCube(roomSelectFieldResult, userSelectFieldResult, pSelectFieldResult._field);
                                                 else
-                                                {
-                                                    //TODO System Message Not Correct Select
-                                                }
+                                                    ShowSystemMessage(packet._UUID, "Not_Correct_Select");
 
                                                 switch (roomSelectFieldResult._Rule)
                                                 {
@@ -1048,9 +1053,7 @@ namespace Server_Scientia
                                     }
                                 }
                                 else
-                                {
-                                    //TODO System Message Fail Buy Item
-                                }
+                                    ShowSystemMessage(pResultBuyItem._UUID, "Fail_Buy_Item");
 
                                 break;
                             #endregion
@@ -1509,6 +1512,14 @@ namespace Server_Scientia
             pShowCoinInfo._coinValue = coinValue;
 
             _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowCoinInfo, pShowCoinInfo, uuid));
+        }
+
+        void ShowSystemMessage(long uuid, string msgType)
+        {
+            DefinedStructure.P_SystemMessage pSystemMessage;
+            pSystemMessage._systemMsgType = msgType;
+
+            _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.SystemMessage, pSystemMessage, uuid));
         }
 
         public void MainLoop()

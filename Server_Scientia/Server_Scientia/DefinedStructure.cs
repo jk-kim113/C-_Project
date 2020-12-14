@@ -174,6 +174,15 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
             public string _nickName;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_QuickEnter
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _quickMode;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _nickName;
+        }
         #endregion
 
         #region ToClient
@@ -479,6 +488,13 @@ namespace Server_Scientia
             public int[] _withLevel;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
             public string _withDate;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_SystemMessage
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _systemMsgType;
         }
         #endregion
 

@@ -34,6 +34,7 @@ namespace Server_Scientia
             RequsetShopInfo,
             BuyItem,
             RequestFriendList,
+            QuickEnter,
 
             ConnectionTerminate,
 
@@ -81,6 +82,7 @@ namespace Server_Scientia
 
             GameOver,
 
+            SystemMessage,
             ConfirmTerminate,
 
             max
