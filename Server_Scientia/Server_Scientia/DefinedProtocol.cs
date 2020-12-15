@@ -35,6 +35,7 @@ namespace Server_Scientia
             BuyItem,
             RequestFriendList,
             QuickEnter,
+            SelectCardResult,
 
             ConnectionTerminate,
 
@@ -79,6 +80,8 @@ namespace Server_Scientia
             EndUserShopInfo,
             ShowCoinInfo,
             ShowFriendList,
+            SelectCard,
+            SelectMyCard,
 
             GameOver,
 

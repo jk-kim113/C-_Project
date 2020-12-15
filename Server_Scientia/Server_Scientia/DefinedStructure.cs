@@ -496,6 +496,15 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
             public string _systemMsgType;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_SelectMyCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+            public int[] _cardArr;
+        }
         #endregion
 
         #region FromServer

@@ -106,6 +106,21 @@ namespace Server_Scientia
             return false;
         }
 
+        public void AddFlaskOnCard(int cardIndex, int flaksCnt)
+        {
+            foreach (eCardField key in _cardDeck.Keys)
+            {
+                for (int n = 0; n < _cardDeck[key].Length; n++)
+                {
+                    if (_cardDeck[key][n]._CardIndex == cardIndex)
+                    {
+                        _cardDeck[key][n]._FlaskCount += flaksCnt;
+                    }
+
+                }
+            }
+        }
+
         public void PickCard(int cardIndex)
         {
             foreach(eCardField field in _cardDeck.Keys)

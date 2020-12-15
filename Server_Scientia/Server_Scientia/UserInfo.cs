@@ -47,9 +47,11 @@ namespace Server_Scientia
 
         int _applyCard;
         bool _isApplyingEffect;
+        int _repetitionCnt;
 
         public int _ApplyCard { get { return _applyCard; } set { _applyCard = value; } }
         public bool _IsApplyingEffect { get { return _isApplyingEffect; } set { _isApplyingEffect = value; } }
+        public int _RepetitionCnt { get { return _repetitionCnt; } set { _repetitionCnt = value; } }
 
         const int _maxSkillMove = 4;
         Dictionary<eCardField, List<SkillCube>> _skillPowerCnt = new Dictionary<eCardField, List<SkillCube>>();

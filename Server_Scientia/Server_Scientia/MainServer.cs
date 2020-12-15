@@ -594,6 +594,33 @@ namespace Server_Scientia
                                     RoomInfo roomPickCardInProgress = _roomInfoSort.GetRoom(pPickCardInProgress._roomNumber);
                                     UserInfo userPickCardInProgress = roomPickCardInProgress.SearchUser(packet._UUID);
 
+                                    if (userPickCardInProgress._IsApplyingEffect)
+                                    {
+                                        switch (userPickCardInProgress._ApplyCard)
+                                        {
+                                            case 16:
+
+                                                ReturnCard(roomPickCardInProgress, userPickCardInProgress, userPickCardInProgress._ApplyCard);
+
+                                                break;
+
+                                            case 25:
+
+                                                if(--userPickCardInProgress._RepetitionCnt > 0)
+                                                    GetCardByEffect(roomPickCardInProgress, userPickCardInProgress);
+                                                else
+                                                    ReturnCard(roomPickCardInProgress, userPickCardInProgress, userPickCardInProgress._ApplyCard);
+
+                                                break;
+
+                                            case 27:
+
+                                                SelectField(roomPickCardInProgress, userPickCardInProgress);
+
+                                                break;
+                                        }
+                                    }
+
                                     RenewProjectBoard(roomPickCardInProgress, pPickCardInProgress._cardIndex);
 
                                     int slotIndex2 = userPickCardInProgress.AddCard(pPickCardInProgress._cardIndex);
@@ -626,7 +653,30 @@ namespace Server_Scientia
 
                                     RoomInfo roomFinishRotate = _roomInfoSort.GetRoom(pFinishRotate._roomNumber);
                                     UserInfo userFinishRotate = roomFinishRotate.SearchUser(packet._UUID);
-                                    for(int n = 0; n < userFinishRotate._CardSlotCnt; n++)
+
+                                    if (userFinishRotate._IsApplyingEffect)
+                                    {
+                                        switch (userFinishRotate._ApplyCard)
+                                        {
+                                            case 13:
+
+                                                userFinishRotate.AddFlaskCube(1);
+                                                roomFinishRotate._MaxFlaskCube -= 1;
+                                                ShowUserFlaskCube(roomFinishRotate, userFinishRotate);
+                                                ShowTotalFlaskCube(roomFinishRotate);
+                                                ReturnCard(roomFinishRotate, userFinishRotate, userFinishRotate._ApplyCard);
+
+                                                break;
+
+                                            case 39:
+
+                                                SelectMyCard(roomFinishRotate, userFinishRotate);
+
+                                                break;
+                                        }
+                                    }
+
+                                    for (int n = 0; n < userFinishRotate._CardSlotCnt; n++)
                                         userFinishRotate._RotateInfoArr[n] += pFinishRotate._rotateCardInfoArr[n];
 
                                     CheckCompleteCard(roomFinishRotate, userFinishRotate);
@@ -663,26 +713,56 @@ namespace Server_Scientia
                                             case 2:
 
                                                 if(userSelectFieldResult.CheckNotMostField(pSelectFieldResult._field))
+                                                {
                                                     RenewSkillCube(roomSelectFieldResult, userSelectFieldResult, pSelectFieldResult._field);
+                                                    ReturnCard(roomSelectFieldResult, userSelectFieldResult, userSelectFieldResult._ApplyCard);
+                                                }   
                                                 else
                                                     ShowSystemMessage(packet._UUID, "Not_Correct_Select");
 
-                                                switch (roomSelectFieldResult._Rule)
+                                                break;
+
+                                            case 27:
+
+                                                for(int n = 0; n < userSelectFieldResult._UnLockSlotCnt; n++)
                                                 {
-                                                    case "Normal":
-
-                                                        roomSelectFieldResult._CardDeck.ReturnCard(userSelectFieldResult._ApplyCard);
-                                                        RenewProjectBoard(roomSelectFieldResult, userSelectFieldResult._ApplyCard);
-
-                                                        break;
+                                                    if(_tbMgr.Get(eTableType.CardData).ToI(userSelectFieldResult._PickedCardArr[n], CardData.Index.Field.ToString())
+                                                        == pSelectFieldResult._field)
+                                                    {
+                                                        userSelectFieldResult._RotateInfoArr[n]++;
+                                                    }
                                                 }
 
-                                                int slotIndex = userSelectFieldResult.DeleteCard(userSelectFieldResult._ApplyCard);
-                                                DeleteCardSLot(roomSelectFieldResult, userSelectFieldResult, slotIndex);
+                                                ReturnCard(roomSelectFieldResult, userSelectFieldResult, userSelectFieldResult._ApplyCard);
+                                                CheckCompleteCard(roomSelectFieldResult, userSelectFieldResult);
 
-                                                userSelectFieldResult._IsApplyingEffect = false;
-                                                userSelectFieldResult._ApplyCard = -1;
+                                                break;
+                                        }
+                                    }
 
+                                    break;
+
+                                case DefinedProtocol.eFromClient.SelectCardResult:
+
+                                    DefinedStructure.P_PickCard pSelectCardResult = new DefinedStructure.P_PickCard();
+                                    pSelectCardResult = (DefinedStructure.P_PickCard)packet.Convert(pSelectCardResult.GetType());
+
+                                    RoomInfo roomSelectCardResult = _roomInfoSort.GetRoom(pSelectCardResult._roomNumber);
+                                    UserInfo userSelectCardResult = roomSelectCardResult.SearchUser(packet._UUID);
+                                    
+                                    if (userSelectCardResult._IsApplyingEffect)
+                                    {
+                                        switch (userSelectCardResult._ApplyCard)
+                                        {
+                                            case 3:
+
+                                                roomSelectCardResult._CardDeck.AddFlaskOnCard(pSelectCardResult._cardIndex, 1);
+                                                roomSelectCardResult._MaxFlaskCube -= 1;
+                                                RenewSkillCube(roomSelectCardResult, userSelectCardResult,
+                                                    _tbMgr.Get(eTableType.CardData).ToI(pSelectCardResult._cardIndex, CardData.Index.Kind.ToString()));
+                                                ShowTotalFlaskCube(roomSelectCardResult);
+
+                                                ReturnCard(roomSelectCardResult, userSelectCardResult, userSelectCardResult._ApplyCard);
                                                 break;
                                         }
                                     }
@@ -1058,6 +1138,7 @@ namespace Server_Scientia
                                 break;
                             #endregion
 
+                            #region community
                             case DefinedProtocol.eToServer.ResultFriendList:
 
                                 DefinedStructure.P_UserFriendList pUserFriendList = new DefinedStructure.P_UserFriendList();
@@ -1078,6 +1159,7 @@ namespace Server_Scientia
                                 _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.ShowFriendList, pShowFriendList, pUserFriendList._UUID));
 
                                 break;
+                                #endregion
                         }
                     }
 
@@ -1293,6 +1375,22 @@ namespace Server_Scientia
 
                     break;
 
+                case 3:
+
+                    user._IsApplyingEffect = true;
+                    user._ApplyCard = cardIndex;
+                    if (!room._IsCardEmpty)
+                    {
+                        DefinedStructure.P_GetCard pGetCard;
+                        pGetCard._index = user._Index;
+
+                        SendBufferInRoom(room, DefinedProtocol.eToClient.SelectCard, pGetCard);
+                    }
+                    else
+                        ReturnCard(room, user, cardIndex);
+
+                    break;
+
                 case 5:
 
                     flask = user.MaxSkillPower() / 2;
@@ -1304,15 +1402,114 @@ namespace Server_Scientia
 
                     break;
 
+                case 13:
+
+                    user._IsApplyingEffect = true;
+                    user._ApplyCard = cardIndex;
+                    if (user._NowCardCnt > 0)
+                    {
+                        DefinedStructure.P_InformRotateCard pInformRotateCard;
+                        pInformRotateCard._index = user._Index;
+                        pInformRotateCard._cardArr = new int[4];
+                        pInformRotateCard._cardRoteteInfo = new int[4];
+                        pInformRotateCard._turnCount = 3;
+
+                        for (int n = 0; n < user._CardSlotCnt; n++)
+                        {
+                            if (n < user._UnLockSlotCnt)
+                            {
+                                if (user._PickedCardArr[n] == 0)
+                                    pInformRotateCard._cardArr[n] = 0;
+                                else
+                                    pInformRotateCard._cardArr[n] = user._PickedCardArr[n];
+                            }
+                            else
+                                pInformRotateCard._cardArr[n] = -1;
+
+                            pInformRotateCard._cardRoteteInfo[n] = user._RotateInfoArr[n];
+                        }
+
+                        SendBufferInRoom(room, DefinedProtocol.eToClient.RotateCard, pInformRotateCard);
+                    }
+                    else
+                    {
+                        user.AddFlaskCube(1);
+                        room._MaxFlaskCube -= 1;
+                        ShowUserFlaskCube(room, user);
+                        ShowTotalFlaskCube(room);
+                        ReturnCard(room, user, cardIndex);
+                    }
+
+                    break;
+
+                case 16:
+
+                    user._IsApplyingEffect = true;
+                    user._ApplyCard = cardIndex;
+                    if (user._NowCardCnt > 0)
+                    {
+                        DefinedStructure.P_InformRotateCard pInformRotateCard;
+                        pInformRotateCard._index = user._Index;
+                        pInformRotateCard._cardArr = new int[4];
+                        pInformRotateCard._cardRoteteInfo = new int[4];
+                        pInformRotateCard._turnCount = 2;
+
+                        for (int n = 0; n < user._CardSlotCnt; n++)
+                        {
+                            if (n < user._UnLockSlotCnt)
+                            {
+                                if (user._PickedCardArr[n] == 0)
+                                    pInformRotateCard._cardArr[n] = 0;
+                                else
+                                    pInformRotateCard._cardArr[n] = user._PickedCardArr[n];
+                            }
+                            else
+                                pInformRotateCard._cardArr[n] = -1;
+
+                            pInformRotateCard._cardRoteteInfo[n] = user._RotateInfoArr[n];
+                        }
+
+                        SendBufferInRoom(room, DefinedProtocol.eToClient.RotateCard, pInformRotateCard);
+                    }
+                    else
+                        GetCardByEffect(room, user);
+
+                    break;
+
                 case 17:
 
-                    user.AddFlaskCube(user.AllSkillCubeCount() / 2);
+                    flask = user.AllSkillCubeCount() / 2;
+                    user.AddFlaskCube(flask);
+                    room._MaxFlaskCube -= flask;
 
                     ShowUserFlaskCube(room, user);
+                    ShowTotalFlaskCube(room);
+
+                    break;
+
+                case 25:
+
+                    user._IsApplyingEffect = true;
+                    user._ApplyCard = cardIndex;
+                    user._RepetitionCnt = 2;
+
+                    GetCardByEffect(room, user);
+
+                    break;
+
+                case 27:
+
+                    user._IsApplyingEffect = true;
+                    user._ApplyCard = cardIndex;
+
+                    GetCardByEffect(room, user);
 
                     break;
 
                 case 29:
+
+                    user._IsApplyingEffect = true;
+                    user._ApplyCard = cardIndex;
 
                     flask = user.MyCardCount();
                     user.AddFlaskCube(flask);
@@ -1321,13 +1518,70 @@ namespace Server_Scientia
                     ShowUserFlaskCube(room, user);
                     ShowTotalFlaskCube(room);
 
-                    //TODO Get One Card
+                    GetCardByEffect(room, user);
 
                     break;
 
+                case 37:
+
+                    for(int n = 0; n < room._UserArr.Length; n++)
+                    {
+                        if(room._UserArr[n] != null && !room._UserArr[n]._IsEmpty)
+                        {
+                            if(room._UserArr[n]._Index != user._Index)
+                            {
+                                for (int m = 0; m < room._UserArr[n]._PickedCardArr.Length; m++)
+                                {
+
+                                }
+                            }
+                        }
+                    }
+
+                    break;
+
+                case 39:
+
+                    user._IsApplyingEffect = true;
+                    user._ApplyCard = cardIndex;
+                    if (user._NowCardCnt > 0)
+                    {
+                        DefinedStructure.P_InformRotateCard pInformRotateCard;
+                        pInformRotateCard._index = user._Index;
+                        pInformRotateCard._cardArr = new int[4];
+                        pInformRotateCard._cardRoteteInfo = new int[4];
+                        pInformRotateCard._turnCount = 2;
+
+                        for (int n = 0; n < user._CardSlotCnt; n++)
+                        {
+                            if (n < user._UnLockSlotCnt)
+                            {
+                                if (user._PickedCardArr[n] == 0)
+                                    pInformRotateCard._cardArr[n] = 0;
+                                else
+                                    pInformRotateCard._cardArr[n] = user._PickedCardArr[n];
+                            }
+                            else
+                                pInformRotateCard._cardArr[n] = -1;
+
+                            pInformRotateCard._cardRoteteInfo[n] = user._RotateInfoArr[n];
+                        }
+
+                        SendBufferInRoom(room, DefinedProtocol.eToClient.RotateCard, pInformRotateCard);
+                    }
+                    else
+                        SelectMyCard(room, user);
+
+                    break;
+                    
                 case 41:
 
-                    user.AddFlaskCube(user._FlaskCubeCnt / 3);
+                    flask = user._FlaskCubeCnt / 3;
+                    user.AddFlaskCube(flask);
+                    room._MaxFlaskCube -= flask;
+
+                    ShowUserFlaskCube(room, user);
+                    ShowTotalFlaskCube(room);
 
                     break;
             }
@@ -1375,18 +1629,7 @@ namespace Server_Scientia
                             return;
                     }
 
-                    switch(room._Rule)
-                    {
-                        case "Normal":
-
-                            room._CardDeck.ReturnCard(completeCard);
-                            RenewProjectBoard(room, completeCard);
-
-                            break;
-                    }
-
-                    int slotIndex = user.DeleteCard(completeCard);
-                    DeleteCardSLot(room, user, slotIndex);
+                    ReturnCard(room, user, completeCard);
                 }
             }
 
@@ -1520,6 +1763,54 @@ namespace Server_Scientia
             pSystemMessage._systemMsgType = msgType;
 
             _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.SystemMessage, pSystemMessage, uuid));
+        }
+
+        void ReturnCard(RoomInfo room, UserInfo user, int completeCard)
+        {
+            switch (room._Rule)
+            {
+                case "Normal":
+
+                    room._CardDeck.ReturnCard(completeCard);
+                    RenewProjectBoard(room, completeCard);
+
+                    break;
+            }
+
+            int slotIndex = user.DeleteCard(completeCard);
+            DeleteCardSLot(room, user, slotIndex);
+
+            user._IsApplyingEffect = false;
+            user._ApplyCard = -1;
+        }
+
+        void GetCardByEffect(RoomInfo room, UserInfo user)
+        {
+            if (!room._IsCardEmpty)
+            {
+                if (user.IsEmptyCardSlot())
+                {
+                    DefinedStructure.P_GetCard pGetCard;
+                    pGetCard._index = user._Index;
+
+                    SendBufferInRoom(room, DefinedProtocol.eToClient.GetCard, pGetCard);
+                }
+                else
+                    ReturnCard(room, user, user._ApplyCard);
+            }
+            else
+                ReturnCard(room, user, user._ApplyCard);
+        }
+
+        void SelectMyCard(RoomInfo room, UserInfo user)
+        {
+            DefinedStructure.P_SelectMyCard pSelectMyCard;
+            pSelectMyCard._index = user._Index;
+            pSelectMyCard._cardArr = new int[4];
+            for (int n = 0; n < user._UnLockSlotCnt; n++)
+                pSelectMyCard._cardArr[n] = user._PickedCardArr[n];
+
+            SendBufferInRoom(room, DefinedProtocol.eToClient.SelectMyCard, pSelectMyCard);
         }
 
         public void MainLoop()
