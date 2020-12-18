@@ -72,7 +72,7 @@ namespace Server_Scientia
         {
             RoomInfo room = new RoomInfo();
             UserInfo user = new UserInfo();
-            user.InitUserInfo(1, "Test", 1, room);
+            //user.InitUserInfo(1, "Test", 1, room);
             user.InitSkillCube();
             user.MoveSkillCube(eCardField.Physics);
 
@@ -391,8 +391,9 @@ namespace Server_Scientia
                                         roomStart._MaxSkillCube = 8;
                                         roomStart._MaxFlaskCube = 30;
                                         roomStart._IsPlay = true;
+                                        roomStart._GameStartTime = DateTime.Now;
 
-                                        for(int n = 0; n < roomStart._UserArr.Length; n++)
+                                        for (int n = 0; n < roomStart._UserArr.Length; n++)
                                         {
                                             if (roomStart._UserArr[n] != null && !roomStart._UserArr[n]._IsEmpty)
                                                 roomStart._UserArr[n].InitSkillCube();
@@ -716,6 +717,7 @@ namespace Server_Scientia
                                                 {
                                                     RenewSkillCube(roomSelectFieldResult, userSelectFieldResult, pSelectFieldResult._field);
                                                     ReturnCard(roomSelectFieldResult, userSelectFieldResult, userSelectFieldResult._ApplyCard);
+                                                    InformNowTurn(roomSelectFieldResult, DefinedProtocol.eToClient.ChooseAction);
                                                 }   
                                                 else
                                                     ShowSystemMessage(packet._UUID, "Not_Correct_Select");
@@ -739,6 +741,8 @@ namespace Server_Scientia
                                                 break;
                                         }
                                     }
+                                    else if(!userSelectFieldResult._IsFinishGameOver)
+                                        userSelectFieldResult.SelectPhysicsEffectField(pSelectFieldResult._field);
 
                                     break;
 
@@ -763,8 +767,121 @@ namespace Server_Scientia
                                                 ShowTotalFlaskCube(roomSelectCardResult);
 
                                                 ReturnCard(roomSelectCardResult, userSelectCardResult, userSelectCardResult._ApplyCard);
+
+                                                break;
+
+                                            case 37:
+
+                                                if(!userSelectCardResult._IsSecondEffect)
+                                                {
+                                                    userSelectCardResult._IsSecondEffect = true;
+
+                                                    for(int n = 0; n < roomSelectCardResult._UserArr.Length; n++)
+                                                    {
+                                                        if(roomSelectCardResult._UserArr[n] != null && !roomSelectCardResult._UserArr[n]._IsEmpty)
+                                                        {
+                                                            if(roomSelectCardResult._UserArr[n].IsHaveCard(pSelectCardResult._cardIndex))
+                                                            {
+                                                                roomSelectCardResult._UserArr[n].AddFlaskOnCard(pSelectCardResult._cardIndex, 1);
+                                                                roomSelectCardResult._MaxFlaskCube -= 1;
+                                                                ShowTotalFlaskCube(roomSelectCardResult);
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+
+                                                    SelectMyCard(roomSelectCardResult, userSelectCardResult);
+                                                }
+                                                else
+                                                {
+                                                    userSelectCardResult.AddFlaskOnCard(pSelectCardResult._cardIndex, 3);
+                                                    roomSelectCardResult._MaxFlaskCube -= 3;
+                                                    ShowTotalFlaskCube(roomSelectCardResult);
+
+                                                    InformNowTurn(roomSelectCardResult, DefinedProtocol.eToClient.ChooseAction);
+                                                }
+                                                
+                                                break;
+
+                                            case 39:
+
+                                                for(int n = 0; n < userSelectCardResult._UnLockSlotCnt; n++)
+                                                {
+                                                    if(userSelectCardResult._PickedCardArr[n] == pSelectCardResult._cardIndex)
+                                                    {
+                                                        userSelectCardResult._FlaskOnCard[n] = 2;
+                                                        roomSelectCardResult._MaxFlaskCube -= 2;
+                                                        ShowTotalFlaskCube(roomSelectCardResult);
+                                                        break;
+                                                    }   
+                                                }
+
+                                                ReturnCard(roomSelectCardResult, userSelectCardResult, userSelectCardResult._ApplyCard);
+
                                                 break;
                                         }
+
+                                        InformNowTurn(roomSelectCardResult, DefinedProtocol.eToClient.ChooseAction);
+                                    }
+
+                                    break;
+
+                                case DefinedProtocol.eFromClient.FinishGameOver:
+
+                                    DefinedStructure.P_InformRoomInfo pFinishGameOver = new DefinedStructure.P_InformRoomInfo();
+                                    pFinishGameOver = (DefinedStructure.P_InformRoomInfo)packet.Convert(pFinishGameOver.GetType());
+
+                                    RoomInfo roomFinishGameOver = _roomInfoSort.GetRoom(pFinishGameOver._roomNumber);
+                                    UserInfo userFinishGameOver = roomFinishGameOver.SearchUser(packet._UUID);
+
+                                    userFinishGameOver._IsFinishGameOver = true;
+
+                                    if(roomFinishGameOver.CheckAllFinishGameOver())
+                                    {
+                                        int[] score = new int[roomFinishGameOver._UserArr.Length];
+                                        int[] userIndex = new int[roomFinishGameOver._UserArr.Length];
+                                        for (int n = 0; n < roomFinishGameOver._UserArr.Length; n++)
+                                        {
+                                            if (roomFinishGameOver._UserArr[n] != null && !roomFinishGameOver._UserArr[n]._IsEmpty)
+                                            {
+                                                roomFinishGameOver._UserArr[n].CaculateScore();
+                                                score[n] = roomFinishGameOver._UserArr[n]._GameScore;
+                                                userIndex[n] = n;
+                                            }
+                                        }
+
+                                        Array.Sort(score, userIndex);
+
+                                        DefinedStructure.P_ShowGameResult pShowGameResult;
+                                        pShowGameResult._firstCharacterIndex = 0;
+                                        pShowGameResult._rankNickName = string.Empty;
+                                        pShowGameResult._rankScore = new int[4];
+                                        Array.Copy(score, pShowGameResult._rankScore, pShowGameResult._rankScore.Length);
+                                        pShowGameResult._accountExp = 0;
+                                        pShowGameResult._physicsExp = 0;
+                                        pShowGameResult._chemistryExp = 0;
+                                        pShowGameResult._biologyExp = 0;
+                                        pShowGameResult._astonomyExp = 0;
+
+                                        TimeSpan timeSpan = DateTime.Now - roomFinishGameOver._GameStartTime;
+                                        for (int n = score.Length - 1; n >= 0; n--)
+                                        {
+                                            if(roomFinishGameOver._UserArr[userIndex[n]] != null && !roomFinishGameOver._UserArr[userIndex[n]]._IsEmpty)
+                                            {
+                                                if (n == score.Length - 1)
+                                                    pShowGameResult._firstCharacterIndex = roomFinishGameOver._UserArr[userIndex[n]]._CharacterIndex;
+                                                
+                                                pShowGameResult._rankNickName += roomFinishGameOver._UserArr[userIndex[n]]._NickName + ",";
+
+                                                pShowGameResult._accountExp = (int)timeSpan.TotalSeconds;
+                                                pShowGameResult._physicsExp = roomFinishGameOver._UserArr[n]._CompleteCountDic[eCardField.Physics] * 10;
+                                                pShowGameResult._chemistryExp = roomFinishGameOver._UserArr[n]._CompleteCountDic[eCardField.Chemistry] * 10;
+                                                pShowGameResult._biologyExp = roomFinishGameOver._UserArr[n]._CompleteCountDic[eCardField.Biology] * 10;
+                                                pShowGameResult._astonomyExp = roomFinishGameOver._UserArr[n]._CompleteCountDic[eCardField.Astronomy] * 10;
+                                            }
+                                        }
+
+                                        SendBufferInRoom(roomFinishGameOver, DefinedProtocol.eToClient.ShowGameResult, pShowGameResult);
                                     }
 
                                     break;
@@ -1042,7 +1159,7 @@ namespace Server_Scientia
                                 RoomInfo room = _roomInfoSort.GetRoom(pShowBattleInfo._roomNumber);
 
                                 UserInfo userInfo = new UserInfo();
-                                userInfo.InitUserInfo(pShowBattleInfo._UUID, pShowBattleInfo._nickName, pShowBattleInfo._accountlevel, room);
+                                userInfo.InitUserInfo(pShowBattleInfo._UUID, pShowBattleInfo._nickName, pShowBattleInfo._characIndex, pShowBattleInfo._accountlevel, room);
                                 room.AddUser(userInfo);
                                 
                                 for(int n = 0; n < room._UserArr.Length; n++)
@@ -1336,6 +1453,8 @@ namespace Server_Scientia
                         else
                             pGameOver._specificScore = 0;
 
+                        room._UserArr[n]._IsFinishGameOver = pGameOver._specificScore == 0;
+
                         _toClientQueue.Enqueue(_socketManager.AddToQueue(DefinedProtocol.eToClient.GameOver, pGameOver, room._UserArr[n]._UUID));
                     }
                 }
@@ -1524,19 +1643,8 @@ namespace Server_Scientia
 
                 case 37:
 
-                    for(int n = 0; n < room._UserArr.Length; n++)
-                    {
-                        if(room._UserArr[n] != null && !room._UserArr[n]._IsEmpty)
-                        {
-                            if(room._UserArr[n]._Index != user._Index)
-                            {
-                                for (int m = 0; m < room._UserArr[n]._PickedCardArr.Length; m++)
-                                {
-
-                                }
-                            }
-                        }
-                    }
+                    user._IsSecondEffect = false;
+                    SelectOtherCard(room, user);
 
                     break;
 
@@ -1782,6 +1890,7 @@ namespace Server_Scientia
 
             user._IsApplyingEffect = false;
             user._ApplyCard = -1;
+            user.CompleteCard((eCardField)_tbMgr.Get(eTableType.CardData).ToI(completeCard, CardData.Index.Field.ToString()));
         }
 
         void GetCardByEffect(RoomInfo room, UserInfo user)
@@ -1811,6 +1920,28 @@ namespace Server_Scientia
                 pSelectMyCard._cardArr[n] = user._PickedCardArr[n];
 
             SendBufferInRoom(room, DefinedProtocol.eToClient.SelectMyCard, pSelectMyCard);
+        }
+
+        void SelectOtherCard(RoomInfo room, UserInfo user)
+        {
+            DefinedStructure.P_SelectOtherCard pSelectOtherCard;
+            pSelectOtherCard._index = user._Index;
+            pSelectOtherCard._cardArr = new int[12];
+
+            int temp = 0;
+            for (int n = 0; n < room._UserArr.Length; n++)
+            {
+                if (room._UserArr[n] != null && !room._UserArr[n]._IsEmpty)
+                {
+                    if (room._UserArr[n]._Index != user._Index)
+                    {
+                        for (int m = 0; m < room._UserArr[n]._UnLockSlotCnt; m++)
+                            pSelectOtherCard._cardArr[temp++] = room._UserArr[n]._PickedCardArr[n];
+                    }
+                }
+            }
+
+            SendBufferInRoom(room, DefinedProtocol.eToClient.SelectOtherCard, pSelectOtherCard);
         }
 
         public void MainLoop()

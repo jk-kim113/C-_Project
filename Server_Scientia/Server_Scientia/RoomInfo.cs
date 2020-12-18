@@ -41,6 +41,9 @@ namespace Server_Scientia
         public int _MaxFlaskCube { get { return _maxFlaskCube; } set { _maxFlaskCube = value; } }
         public bool _IsFinalTurn { get { return _isFinalTurn; } set { _isFinalTurn = value; } }
 
+        DateTime _gameStartTime;
+        public DateTime _GameStartTime { get { return _gameStartTime; } set { _gameStartTime = value; } }
+
         CardInfo _cardInfo = new CardInfo();
 
         public CardInfo _CardDeck { get { return _cardInfo; } }
@@ -84,6 +87,20 @@ namespace Server_Scientia
             }
 
             return null;
+        }
+
+        public bool CheckAllFinishGameOver()
+        {
+            for(int n = 0; n < _userArr.Length; n++)
+            {
+                if(_userArr[n] != null && !_userArr[n]._IsEmpty)
+                {
+                    if (!_userArr[n]._IsFinishGameOver)
+                        return false;
+                }
+            }
+
+            return true;
         }
     }
 }

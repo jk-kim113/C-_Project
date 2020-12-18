@@ -11,11 +11,13 @@ namespace Server_Scientia
         int _index;
         long _uuid;
         string _nickName;
+        int _characterIndex;
         int _level;
 
         public int _Index { get { return _index; } set { _index = value; } }
         public long _UUID { get { return _uuid; } }
         public string _NickName { get { return _nickName; } }
+        public int _CharacterIndex { get { return _characterIndex; } }
         public int _Level { get { return _level; } }
 
         bool _isEmpty = true;
@@ -35,6 +37,7 @@ namespace Server_Scientia
         int _flaskCubeCnt;
         bool _isFlaskEffect;
         bool _isSkillEffect;
+        int[] _flaskOnCard = new int[_maxCardSlotCnt];
 
         public int _CardSlotCnt { get { return _maxCardSlotCnt; } }
         public int[] _PickedCardArr { get { return _pickedCardArr; } }
@@ -44,24 +47,38 @@ namespace Server_Scientia
         public int _FlaskCubeCnt { get { return _flaskCubeCnt; } set { _flaskCubeCnt = value; } }
         public bool _IsFlaskEffect { get { return _isFlaskEffect; } }
         public bool _IsSkillEffect { get { return _isSkillEffect; } }
+        public int[] _FlaskOnCard { get { return _flaskOnCard; } }
 
         int _applyCard;
         bool _isApplyingEffect;
         int _repetitionCnt;
+        bool _isSecondEffect;
+        bool _isFinishGameOver;
 
         public int _ApplyCard { get { return _applyCard; } set { _applyCard = value; } }
         public bool _IsApplyingEffect { get { return _isApplyingEffect; } set { _isApplyingEffect = value; } }
         public int _RepetitionCnt { get { return _repetitionCnt; } set { _repetitionCnt = value; } }
+        public bool _IsSecondEffect { get { return _isSecondEffect; } set { _isSecondEffect = value; } }
+        public bool _IsFinishGameOver { get { return _isFinishGameOver; } set { _isFinishGameOver = value; } }
+
+        int _currentPhysicsEffectIndex;
+        int[] _physicsEffectField = new int[2];
+        Dictionary<eCardField, int> _completeCountDic = new Dictionary<eCardField, int>();
+        public Dictionary<eCardField, int> _CompleteCountDic { get { return _completeCountDic; } }
 
         const int _maxSkillMove = 4;
         Dictionary<eCardField, List<SkillCube>> _skillPowerCnt = new Dictionary<eCardField, List<SkillCube>>();
 
         RoomInfo _room;
 
-        public void InitUserInfo(long uuid, string nickName, int level, RoomInfo room)
+        int _gameScore;
+        public int _GameScore { get { return _gameScore; } }
+
+        public void InitUserInfo(long uuid, string nickName, int characterIndex, int level, RoomInfo room)
         {
             _uuid = uuid;
             _nickName = nickName;
+            _characterIndex = characterIndex;
             _level = level;
             _isEmpty = true;
             _currentCardCnt = 0;
@@ -69,7 +86,10 @@ namespace Server_Scientia
             _room = room;
 
             for (int n = 0; n < (int)eCardField.max; n++)
+            {
+                _completeCountDic.Add((eCardField)n, 0);
                 _skillPowerCnt.Add((eCardField)n, new List<SkillCube>());
+            }   
         }
 
         public bool IsEmptyCardSlot()
@@ -111,6 +131,16 @@ namespace Server_Scientia
             return -1;
         }
 
+        public void CompleteCard(eCardField field)
+        {
+            _completeCountDic[field]++;
+        }
+
+        public void SelectPhysicsEffectField(int field)
+        {
+            _physicsEffectField[_currentPhysicsEffectIndex++] = field;
+        }
+
         bool EmptyCardSlotIndex(out int index)
         {
             index = -1;
@@ -121,6 +151,17 @@ namespace Server_Scientia
                     index = n;
                     return true;
                 }
+            }
+
+            return false;
+        }
+
+        public bool IsHaveCard(int cardIndex)
+        {
+            for(int n = 0; n < _unLockSlotCnt; n++)
+            {
+                if (_pickedCardArr[n] == cardIndex)
+                    return true;
             }
 
             return false;
@@ -152,6 +193,15 @@ namespace Server_Scientia
         public void AddFlaskCube(int add)
         {
             _flaskCubeCnt += add;
+        }
+
+        public void AddFlaskOnCard(int cardIndex, int cnt)
+        {
+            for (int n = 0; n < _unLockSlotCnt; n++)
+            {
+                if (_pickedCardArr[n] == cardIndex)
+                    _flaskOnCard[n] += cnt;
+            }
         }
 
         public int MaxSkillPower()
@@ -304,6 +354,89 @@ namespace Server_Scientia
             int temp = 0;
             for (int n = 0; n < _skillPowerCnt[field].Count; n++)
                 temp += _skillPowerCnt[field][n]._Position;
+
+            return temp;
+        }
+
+        public void CaculateScore()
+        {
+            _gameScore = _flaskCubeCnt + SkillCubeScore() + PhysicsEffectScore() + ChemistryEffectScore() + BiologyEffectScore() + AstronomyEffectScore();
+        }
+
+        int SkillCubeScore()
+        {
+            int temp = 0;
+            for(int n = 0; n < (int)eCardField.max; n++)
+            {
+                for (int m = 0; n < _skillPowerCnt[(eCardField)n].Count; m++)
+                    temp += _skillPowerCnt[(eCardField)n][m]._Position;
+            }
+
+            return temp;
+        }
+
+        int PhysicsEffectScore()
+        {
+            int temp = 0;
+            for(int n = 0; n < _currentPhysicsEffectIndex; n++)
+                temp += FieldSkillPower((eCardField)_physicsEffectField[n]);
+
+            return temp;
+        }
+
+        int ChemistryEffectScore()
+        {
+            int temp = 0;
+
+            int position = 4;
+            for(int n = 0; n < _skillPowerCnt[eCardField.Chemistry].Count; n++)
+            {
+                if (n >= 2)
+                    break;
+
+                if (_skillPowerCnt[eCardField.Chemistry][n]._Position == position--)
+                    temp += AllSkillCubeCount();
+                else
+                    break;
+            }   
+
+            return temp;
+        }
+
+        int BiologyEffectScore()
+        {
+            int temp = 0;
+
+            int position = 4;
+            for (int n = 0; n < _skillPowerCnt[eCardField.Biology].Count; n++)
+            {
+                if (n >= 2)
+                    break;
+
+                if (_skillPowerCnt[eCardField.Biology][n]._Position == position--)
+                    temp += 7;
+                else
+                    break;
+            }
+
+            return temp;
+        }
+
+        int AstronomyEffectScore()
+        {
+            int temp = 0;
+
+            int position = 4;
+            for (int n = 0; n < _skillPowerCnt[eCardField.Astronomy].Count; n++)
+            {
+                if (n >= 2)
+                    break;
+
+                if (_skillPowerCnt[eCardField.Astronomy][n]._Position == position--)
+                    temp += _flaskCubeCnt / 3;
+                else
+                    break;
+            }
 
             return temp;
         }

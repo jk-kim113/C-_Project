@@ -36,6 +36,7 @@ namespace Server_Scientia
             RequestFriendList,
             QuickEnter,
             SelectCardResult,
+            FinishGameOver,
 
             ConnectionTerminate,
 
@@ -82,8 +83,10 @@ namespace Server_Scientia
             ShowFriendList,
             SelectCard,
             SelectMyCard,
+            SelectOtherCard,
 
             GameOver,
+            ShowGameResult,
 
             SystemMessage,
             ConfirmTerminate,

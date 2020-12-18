@@ -461,6 +461,7 @@ namespace DB_Scientia
             pShowBattleInfo._roomNumber = roomNumber;
             pShowBattleInfo._UUID = uuid;
             pShowBattleInfo._nickName = nickName;
+            pShowBattleInfo._characIndex = _dbQuery.SearchCharacterIndex(nickName);
             pShowBattleInfo._accountlevel = _dbQuery.SearchAccountLevel(nickName);
 
             ToPacket(DefinedProtocol.eToServer.ShowBattleInfo, pShowBattleInfo);

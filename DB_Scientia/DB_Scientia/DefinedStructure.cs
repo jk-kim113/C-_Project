@@ -166,6 +166,8 @@ namespace DB_Scientia
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
             public string _nickName;
             [MarshalAs(UnmanagedType.I4)]
+            public int _characIndex;
+            [MarshalAs(UnmanagedType.I4)]
             public int _accountlevel;
         }
 

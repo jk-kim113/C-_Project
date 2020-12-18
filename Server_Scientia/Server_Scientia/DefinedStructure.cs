@@ -505,6 +505,36 @@ namespace Server_Scientia
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
             public int[] _cardArr;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_SelectOtherCard
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _index;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
+            public int[] _cardArr;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct P_ShowGameResult
+        {
+            [MarshalAs(UnmanagedType.I4)]
+            public int _firstCharacterIndex;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+            public string _rankNickName;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+            public int[] _rankScore;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _accountExp;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _physicsExp;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _chemistryExp;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _biologyExp;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _astonomyExp;
+        }
         #endregion
 
         #region FromServer
@@ -692,6 +722,8 @@ namespace Server_Scientia
             public long _UUID;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
             public string _nickName;
+            [MarshalAs(UnmanagedType.I4)]
+            public int _characIndex;
             [MarshalAs(UnmanagedType.I4)]
             public int _accountlevel;
         }
