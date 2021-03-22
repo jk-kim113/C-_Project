@@ -14,7 +14,7 @@ namespace Server_Scientia
         int _characterIndex;
         int _level;
 
-        public int _Index { get { return _index; } set { _index = value; } }
+        public int _Index { get { return _index; }}
         public long _UUID { get { return _uuid; } }
         public string _NickName { get { return _nickName; } }
         public int _CharacterIndex { get { return _characterIndex; } }
@@ -24,25 +24,23 @@ namespace Server_Scientia
         bool _isReady;
         bool _isFinishReadCard;
 
-        public bool _IsEmpty { get { return _isEmpty; } set { _isEmpty = value; } }
+        public bool _IsEmpty { get { return _isEmpty; } }
         public bool _IsReady { get { return _isReady; } set { _isReady = value; } }
         public bool _IsFinishReadCard { get { return _isFinishReadCard; } set { _isFinishReadCard = value; } }
 
         const int _maxCardSlotCnt = 4;
 
-        int[] _pickedCardArr = new int[_maxCardSlotCnt];
+        MyCard[] _myPickCard = new MyCard[_maxCardSlotCnt];
         int _currentCardCnt;
         int _unLockSlotCnt = 2;
-        int[] _rotateInfoArr = new int[_maxCardSlotCnt];
         int _flaskCubeCnt;
         bool _isFlaskEffect;
         bool _isSkillEffect;
         int[] _flaskOnCard = new int[_maxCardSlotCnt];
 
         public int _CardSlotCnt { get { return _maxCardSlotCnt; } }
-        public int[] _PickedCardArr { get { return _pickedCardArr; } }
+        public MyCard[] _MyPickCard { get { return _myPickCard; } }
         public int _UnLockSlotCnt { get { return _unLockSlotCnt; } }
-        public int[] _RotateInfoArr { get { return _rotateInfoArr; } }
         public int _NowCardCnt { get { return _currentCardCnt; } }
         public int _FlaskCubeCnt { get { return _flaskCubeCnt; } set { _flaskCubeCnt = value; } }
         public bool _IsFlaskEffect { get { return _isFlaskEffect; } }
@@ -67,28 +65,49 @@ namespace Server_Scientia
         public Dictionary<eCardField, int> _CompleteCountDic { get { return _completeCountDic; } }
 
         const int _maxSkillMove = 4;
-        Dictionary<eCardField, List<SkillCube>> _skillPowerCnt = new Dictionary<eCardField, List<SkillCube>>();
-
-        RoomInfo _room;
+        Dictionary<eCardField, List<SkillCube>> _skillCubeTrack = new Dictionary<eCardField, List<SkillCube>>();
 
         int _gameScore;
         public int _GameScore { get { return _gameScore; } }
 
-        public void InitUserInfo(long uuid, string nickName, int characterIndex, int level, RoomInfo room)
+        public UserInfo()
         {
+            _isEmpty = true;
+        }
+
+        public void InitUserInfo(long uuid, string nickName, int characterIndex, int level, int index)
+        {
+            _index = index;
             _uuid = uuid;
             _nickName = nickName;
             _characterIndex = characterIndex;
             _level = level;
-            _isEmpty = true;
-            _currentCardCnt = 0;
 
-            _room = room;
+            _isEmpty = false;
+            _currentCardCnt = 0;
 
             for (int n = 0; n < (int)eCardField.max; n++)
             {
                 _completeCountDic.Add((eCardField)n, 0);
-                _skillPowerCnt.Add((eCardField)n, new List<SkillCube>());
+                _skillCubeTrack.Add((eCardField)n, new List<SkillCube>());
+            }
+
+            for (int n = 0; n < _myPickCard.Length; n++)
+            {
+                if (_myPickCard[n] == null)
+                    _myPickCard[n] = new MyCard();
+            }
+        }
+
+        public void GameStart()
+        {
+            for(int n = 0; n < _myPickCard.Length; n++)
+                _myPickCard[n].InitMyCard();
+
+            foreach (eCardField field in _skillCubeTrack.Keys)
+            {
+                _skillCubeTrack[field].Clear();
+                _skillCubeTrack[field].Add(new SkillCube());
             }   
         }
 
@@ -96,7 +115,7 @@ namespace Server_Scientia
         {
             for (int n = 0; n < _unLockSlotCnt; n++)
             {
-                if (_pickedCardArr[n] == 0)
+                if (_myPickCard[n]._IsEmpty)
                     return true;
             }
 
@@ -108,21 +127,35 @@ namespace Server_Scientia
             int emptySlot = -1;
             if (EmptyCardSlotIndex(out emptySlot))
             {
-                _pickedCardArr[emptySlot] = cardIndex;
+                _myPickCard[emptySlot].Add(cardIndex);
                 _currentCardCnt++;
             }   
 
             return emptySlot;
         }
 
+        bool EmptyCardSlotIndex(out int index)
+        {
+            index = -1;
+            for (int n = 0; n < _unLockSlotCnt; n++)
+            {
+                if (_myPickCard[n]._IsEmpty)
+                {
+                    index = n;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public int DeleteCard(int cardIndex)
         {
             for (int n = 0; n < _unLockSlotCnt; n++)
             {
-                if (_pickedCardArr[n] == cardIndex)
+                if (!_myPickCard[n]._IsEmpty && _myPickCard[n]._CardIndex == cardIndex)
                 {
-                    _pickedCardArr[n] = 0;
-                    _rotateInfoArr[n] = 0;
+                    _myPickCard[n].InitMyCard();
                     _currentCardCnt--;
                     return n;
                 }
@@ -141,26 +174,11 @@ namespace Server_Scientia
             _physicsEffectField[_currentPhysicsEffectIndex++] = field;
         }
 
-        bool EmptyCardSlotIndex(out int index)
-        {
-            index = -1;
-            for (int n = 0; n < _unLockSlotCnt; n++)
-            {
-                if (_pickedCardArr[n] == 0)
-                {
-                    index = n;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         public bool IsHaveCard(int cardIndex)
         {
             for(int n = 0; n < _unLockSlotCnt; n++)
             {
-                if (_pickedCardArr[n] == cardIndex)
+                if (_myPickCard[n]._CardIndex == cardIndex)
                     return true;
             }
 
@@ -170,9 +188,9 @@ namespace Server_Scientia
         public bool IsComplete(out int completeCnt)
         {
             completeCnt = 0;
-            for(int n = 0; n < _rotateInfoArr.Length; n++)
+            for(int n = 0; n < _unLockSlotCnt; n++)
             {
-                if (_rotateInfoArr[n] >= 4)
+                if (_myPickCard[n]._RotateInfo >= 4)
                     completeCnt++;
             }
 
@@ -199,7 +217,7 @@ namespace Server_Scientia
         {
             for (int n = 0; n < _unLockSlotCnt; n++)
             {
-                if (_pickedCardArr[n] == cardIndex)
+                if (_myPickCard[n]._CardIndex == cardIndex)
                     _flaskOnCard[n] += cnt;
             }
         }
@@ -209,10 +227,10 @@ namespace Server_Scientia
             int temp = int.MinValue;
             int[] skillPower = new int[4];
 
-            foreach(eCardField key in _skillPowerCnt.Keys)
+            foreach(eCardField key in _skillCubeTrack.Keys)
             {
-                for(int n = 0; n < _skillPowerCnt[key].Count; n++)
-                    skillPower[(int)key] += _skillPowerCnt[key][n]._Position;
+                for(int n = 0; n < _skillCubeTrack[key].Count; n++)
+                    skillPower[(int)key] += _skillCubeTrack[key][n]._Position;
             }
 
             for(int n = 0; n < skillPower.Length; n++)
@@ -228,8 +246,8 @@ namespace Server_Scientia
         {
             int temp = 0;
 
-            foreach(eCardField key in _skillPowerCnt.Keys)
-                temp += _skillPowerCnt[key].Count;
+            foreach(eCardField key in _skillCubeTrack.Keys)
+                temp += _skillCubeTrack[key].Count;
 
             return temp;
         }
@@ -237,9 +255,9 @@ namespace Server_Scientia
         public int MyCardCount()
         {
             int temp = 0;
-            for(int n = 0; n < _pickedCardArr.Length; n++)
+            for(int n = 0; n < _myPickCard.Length; n++)
             {
-                if (_pickedCardArr[n] != 0)
+                if (!_myPickCard[n]._IsEmpty)
                     temp++;
             }
 
@@ -248,46 +266,37 @@ namespace Server_Scientia
 
         public int GetCompleteCard()
         {
-            for(int n = 0; n < _rotateInfoArr.Length; n++)
+            for(int n = 0; n < _myPickCard.Length; n++)
             {
-                if (_rotateInfoArr[n] >= 4)
-                    return _pickedCardArr[n];
+                if (_myPickCard[n]._RotateInfo >= 4)
+                    return _myPickCard[n]._CardIndex;
             }
 
             return 0;
         }
 
-        public void InitSkillCube()
+        public bool MoveSkillCube(eCardField field, RoomInfo room)
         {
-            foreach(eCardField field in _skillPowerCnt.Keys)
+            for(int n = 0; n < _skillCubeTrack[field].Count; n++)
             {
-                _skillPowerCnt[field].Add(new SkillCube());
-                Console.WriteLine("{0} 유저의 {1} 분야 카드 수 : {2}",_nickName, field, _skillPowerCnt[field].Count);
-            }
-        }
-
-        public bool MoveSkillCube(eCardField field)
-        {
-            for(int n = 0; n < _skillPowerCnt[field].Count; n++)
-            {
-                if (!_skillPowerCnt[field][n]._IsFinish)
+                if (!_skillCubeTrack[field][n]._IsFinish)
                 {
-                    if(++_skillPowerCnt[field][n]._Position >= _maxSkillMove - _skillPowerCnt[field].Count - 1)
+                    if(++_skillCubeTrack[field][n]._Position >= _maxSkillMove - _skillCubeTrack[field].Count - 1)
                     {
-                        _skillPowerCnt[field][n]._IsFinish = true;
+                        _skillCubeTrack[field][n]._IsFinish = true;
 
-                        if(_room._MaxSkillCube > 0)
+                        if(room._MaxSkillCube > 0)
                         {
-                            _skillPowerCnt[field].Add(new SkillCube());
+                            _skillCubeTrack[field].Add(new SkillCube());
                             Console.WriteLine("새로운 스킬 큐브를 추가 하였습니다");
-                            if (--_room._MaxSkillCube <= 0)
-                                _room._IsFinalTurn = true;
+                            if (--room._MaxSkillCube <= 0)
+                                room._IsFinalTurn = true;
 
                             return true;
                         }   
                     }
 
-                    Console.WriteLine("{0} 분야의 스킬이 {1}로 증가 했습니다", field, _skillPowerCnt[field][n]._Position);
+                    Console.WriteLine("{0} 분야의 스킬이 {1}로 증가 했습니다", field, _skillCubeTrack[field][n]._Position);
                     break;
                 }
             }
@@ -299,9 +308,9 @@ namespace Server_Scientia
         {
             count = 0;
 
-            for(int n = 0; n < _skillPowerCnt[eCardField.Physics].Count; n++)
+            for(int n = 0; n < _skillCubeTrack[eCardField.Physics].Count; n++)
             {
-                if(_skillPowerCnt[eCardField.Physics][n]._Position == _maxSkillMove - count)
+                if(_skillCubeTrack[eCardField.Physics][n]._Position == _maxSkillMove - count)
                 {
                     count++;
                 }
@@ -317,9 +326,9 @@ namespace Server_Scientia
         {
             int[] skillcubePos = new int[5];
 
-            for(int n = 0; n < _skillPowerCnt[field].Count; n++)
+            for(int n = 0; n < _skillCubeTrack[field].Count; n++)
             {
-                skillcubePos[_skillPowerCnt[field][n]._Position] = 1;
+                skillcubePos[_skillCubeTrack[field][n]._Position] = 1;
             }
 
             return skillcubePos;
@@ -330,13 +339,13 @@ namespace Server_Scientia
             int mostSkll = MaxSkillPower();
 
             int cnt = 0;
-            foreach(eCardField fieldkey in _skillPowerCnt.Keys)
+            foreach(eCardField fieldkey in _skillCubeTrack.Keys)
             {
                 if (FieldSkillPower(fieldkey) == mostSkll)
                 {
                     cnt++;
 
-                    if (cnt >= _skillPowerCnt.Count)
+                    if (cnt >= _skillCubeTrack.Count)
                         return true;
                 }
                 else
@@ -352,8 +361,8 @@ namespace Server_Scientia
         int FieldSkillPower(eCardField field)
         {
             int temp = 0;
-            for (int n = 0; n < _skillPowerCnt[field].Count; n++)
-                temp += _skillPowerCnt[field][n]._Position;
+            for (int n = 0; n < _skillCubeTrack[field].Count; n++)
+                temp += _skillCubeTrack[field][n]._Position;
 
             return temp;
         }
@@ -368,8 +377,8 @@ namespace Server_Scientia
             int temp = 0;
             for(int n = 0; n < (int)eCardField.max; n++)
             {
-                for (int m = 0; n < _skillPowerCnt[(eCardField)n].Count; m++)
-                    temp += _skillPowerCnt[(eCardField)n][m]._Position;
+                for (int m = 0; n < _skillCubeTrack[(eCardField)n].Count; m++)
+                    temp += _skillCubeTrack[(eCardField)n][m]._Position;
             }
 
             return temp;
@@ -389,12 +398,12 @@ namespace Server_Scientia
             int temp = 0;
 
             int position = 4;
-            for(int n = 0; n < _skillPowerCnt[eCardField.Chemistry].Count; n++)
+            for(int n = 0; n < _skillCubeTrack[eCardField.Chemistry].Count; n++)
             {
                 if (n >= 2)
                     break;
 
-                if (_skillPowerCnt[eCardField.Chemistry][n]._Position == position--)
+                if (_skillCubeTrack[eCardField.Chemistry][n]._Position == position--)
                     temp += AllSkillCubeCount();
                 else
                     break;
@@ -408,12 +417,12 @@ namespace Server_Scientia
             int temp = 0;
 
             int position = 4;
-            for (int n = 0; n < _skillPowerCnt[eCardField.Biology].Count; n++)
+            for (int n = 0; n < _skillCubeTrack[eCardField.Biology].Count; n++)
             {
                 if (n >= 2)
                     break;
 
-                if (_skillPowerCnt[eCardField.Biology][n]._Position == position--)
+                if (_skillCubeTrack[eCardField.Biology][n]._Position == position--)
                     temp += 7;
                 else
                     break;
@@ -427,12 +436,12 @@ namespace Server_Scientia
             int temp = 0;
 
             int position = 4;
-            for (int n = 0; n < _skillPowerCnt[eCardField.Astronomy].Count; n++)
+            for (int n = 0; n < _skillCubeTrack[eCardField.Astronomy].Count; n++)
             {
                 if (n >= 2)
                     break;
 
-                if (_skillPowerCnt[eCardField.Astronomy][n]._Position == position--)
+                if (_skillCubeTrack[eCardField.Astronomy][n]._Position == position--)
                     temp += _flaskCubeCnt / 3;
                 else
                     break;
@@ -453,6 +462,37 @@ namespace Server_Scientia
             {
                 _position = 0;
                 _isFinish = false;
+            }
+        }
+
+        internal class MyCard
+        {
+            int _cardIndex;
+            int _rotateInfo;
+            int _flaskCount;
+            bool _isEmpty;
+
+            public int _CardIndex { get { return _cardIndex; } }
+            public int _RotateInfo { get { return _rotateInfo; } set { _rotateInfo = value; } }
+            public bool _IsEmpty { get { return _isEmpty; } }
+
+            public MyCard()
+            {
+                InitMyCard();
+            }
+
+            public void InitMyCard()
+            {
+                _cardIndex = 0;
+                _rotateInfo = 0;
+                _flaskCount = 0;
+                _isEmpty = true;
+            }
+
+            public void Add(int cardIndex)
+            {
+                _cardIndex = cardIndex;
+                _isEmpty = false;
             }
         }
     }

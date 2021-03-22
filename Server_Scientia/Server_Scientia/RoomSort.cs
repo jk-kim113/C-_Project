@@ -16,6 +16,7 @@ namespace Server_Scientia
             if(_roomInfoDic.ContainsKey(mode))
             {
                 _roomInfoDic[mode].Add(room);
+                HeapSort(mode);
             }
             else
             {
@@ -24,8 +25,6 @@ namespace Server_Scientia
 
                 _roomInfoDic.Add(mode, temp);
             }
-
-            HeapSort(mode);
         }
 
         public RoomInfo GetRoom(int roomNum)

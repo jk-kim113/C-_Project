@@ -8,7 +8,7 @@ namespace Server_Scientia
 {
     class CardInfo
     {
-        Dictionary<eCardField, Card[]> _cardDeck = new Dictionary<eCardField, Card[]>();
+        Dictionary<eCardField, Card[]> _projectBoard = new Dictionary<eCardField, Card[]>();
 
         const int _maxFieldCnt = 3;
         int _currentCardCnt = 0;
@@ -18,20 +18,20 @@ namespace Server_Scientia
         public void InitCardDeck()
         {
             for(int n = 0; n < (int)eCardField.max; n++)
-                _cardDeck.Add((eCardField)n, new Card[_maxFieldCnt]);
+                _projectBoard.Add((eCardField)n, new Card[_maxFieldCnt]);
         }
 
         public void AddCard(eCardField field, int cardIndex)
         {
-            for(int n = 0; n < _cardDeck[field].Length; n++)
+            for(int n = 0; n < _projectBoard[field].Length; n++)
             {
-                if(_cardDeck[field][n] == null)
-                    _cardDeck[field][n] = new Card();
+                if(_projectBoard[field][n] == null)
+                    _projectBoard[field][n] = new Card();
 
-                if (_cardDeck[field][n]._IsEmpty)
+                if (_projectBoard[field][n]._IsEmpty)
                 {
-                    _cardDeck[field][n].Add(cardIndex);
-                    _cardDeck[field][n]._IsEmpty = false;
+                    _projectBoard[field][n].Add(cardIndex);
+                    _projectBoard[field][n]._IsEmpty = false;
                     break;
                 }
             }
@@ -42,9 +42,9 @@ namespace Server_Scientia
         public int FieldCount(eCardField field)
         {
             int temp = 0;
-            for(int n = 0; n < _cardDeck[field].Length; n++)
+            for(int n = 0; n < _projectBoard[field].Length; n++)
             {
-                if (_cardDeck[field][n] != null && !_cardDeck[field][n]._IsEmpty)
+                if (_projectBoard[field][n] != null && !_projectBoard[field][n]._IsEmpty)
                     temp++;
             }
 
@@ -53,11 +53,11 @@ namespace Server_Scientia
 
         public bool IsOver()
         {
-            foreach (eCardField key in _cardDeck.Keys)
+            foreach (eCardField key in _projectBoard.Keys)
             {
-                for(int n = 0; n < _cardDeck[key].Length; n++)
+                for(int n = 0; n < _projectBoard[key].Length; n++)
                 {
-                    if (_cardDeck[key][n] == null || _cardDeck[key][n]._IsEmpty)
+                    if (_projectBoard[key][n] == null || _projectBoard[key][n]._IsEmpty)
                         return false;
                 }
             }
@@ -67,9 +67,9 @@ namespace Server_Scientia
 
         public bool IsContain(eCardField field, int cardIndex)
         {
-            for (int n = 0; n < _cardDeck[field].Length; n++)
+            for (int n = 0; n < _projectBoard[field].Length; n++)
             {
-                if (_cardDeck[field][n] != null && _cardDeck[field][n]._CardIndex == cardIndex)
+                if (_projectBoard[field][n] != null && _projectBoard[field][n]._CardIndex == cardIndex)
                     return true;
             }
 
@@ -78,28 +78,24 @@ namespace Server_Scientia
 
         public int[] GetFieldCard(eCardField field)
         {
-            int[] temp = new int[_cardDeck[field].Length];
+            int[] temp = new int[_projectBoard[field].Length];
 
             for (int n = 0; n < temp.Length; n++)
-                temp[n] = _cardDeck[field][n]._CardIndex;
+                temp[n] = _projectBoard[field][n]._CardIndex;
 
             return temp;
         }
 
-        public bool GetFlaskOnCard(int cardIndex, out int flaskCnt)
+        public bool GetFlaskOnCard(eCardField key, int cardIndex, out int flaskCnt)
         {
             flaskCnt = 0;
-            foreach (eCardField key in _cardDeck.Keys)
+            for (int n = 0; n < _projectBoard[key].Length; n++)
             {
-                for(int n = 0; n < _cardDeck[key].Length; n++)
+                if (_projectBoard[key][n]._CardIndex == cardIndex)
                 {
-                    if (_cardDeck[key][n]._CardIndex == cardIndex)
-                    {
-                        flaskCnt = _cardDeck[key][n]._FlaskCount;
-                        _cardDeck[key][n]._FlaskCount = 0;
-                        return true;
-                    }
-                        
+                    flaskCnt = _projectBoard[key][n]._FlaskCount;
+                    _projectBoard[key][n]._FlaskCount = 0;
+                    return true;
                 }
             }
 
@@ -108,59 +104,56 @@ namespace Server_Scientia
 
         public void AddFlaskOnCard(int cardIndex, int flaksCnt)
         {
-            foreach (eCardField key in _cardDeck.Keys)
+            foreach (eCardField key in _projectBoard.Keys)
             {
-                for (int n = 0; n < _cardDeck[key].Length; n++)
+                for (int n = 0; n < _projectBoard[key].Length; n++)
                 {
-                    if (_cardDeck[key][n]._CardIndex == cardIndex)
-                    {
-                        _cardDeck[key][n]._FlaskCount += flaksCnt;
-                    }
-
+                    if (_projectBoard[key][n]._CardIndex == cardIndex)
+                        _projectBoard[key][n]._FlaskCount += flaksCnt;
                 }
             }
         }
 
-        public void PickCard(int cardIndex)
+        public bool PickCard(eCardField field, int cardIndex)
         {
-            foreach(eCardField field in _cardDeck.Keys)
+            for (int n = 0; n < _projectBoard[field].Length; n++)
             {
-                for(int n = 0; n < _cardDeck[field].Length; n++)
+                if (_projectBoard[field][n]._CardIndex == cardIndex)
                 {
-                    if (_cardDeck[field][n]._CardIndex == cardIndex)
-                    {
-                        _cardDeck[field][n]._CardCount--;
-                        return;
-                    }
+                    if (_projectBoard[field][n]._CardCount <= 0)
+                        return false;
+                    else
+                        _projectBoard[field][n]._CardCount--;
+
+                    break;
                 }
             }
+
+            return true;
         }
 
         public int CardCount(int cardIndex)
         {
-            foreach (eCardField field in _cardDeck.Keys)
+            foreach (eCardField field in _projectBoard.Keys)
             {
-                for (int n = 0; n < _cardDeck[field].Length; n++)
+                for (int n = 0; n < _projectBoard[field].Length; n++)
                 {
-                    if (_cardDeck[field][n]._CardIndex == cardIndex)
-                        return _cardDeck[field][n]._CardCount;
+                    if (_projectBoard[field][n]._CardIndex == cardIndex)
+                        return _projectBoard[field][n]._CardCount;
                 }
             }
 
             return -1;
         }
 
-        public void ReturnCard(int cardIndex)
+        public void ReturnCard(eCardField field, int cardIndex)
         {
-            foreach (eCardField field in _cardDeck.Keys)
+            for (int n = 0; n < _projectBoard[field].Length; n++)
             {
-                for (int n = 0; n < _cardDeck[field].Length; n++)
+                if (_projectBoard[field][n]._CardIndex == cardIndex)
                 {
-                    if (_cardDeck[field][n]._CardIndex == cardIndex)
-                    {
-                        _cardDeck[field][n]._CardCount++;
-                        return;
-                    }
+                    _projectBoard[field][n]._CardCount++;
+                    return;
                 }
             }
         }

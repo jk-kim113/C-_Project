@@ -59,7 +59,6 @@ namespace Server_Scientia
             FinishShowRoom,
             ShowReady,
             ShowMaster,
-            CannotPlay,
             GameStart,
             ShowPickedCard,
             PickCard,

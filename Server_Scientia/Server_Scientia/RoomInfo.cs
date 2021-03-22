@@ -23,7 +23,7 @@ namespace Server_Scientia
         public string _Mode { get { return _mode; } }
         public string _Rule { get { return _rule; } }
         public int _Master { get { return _master; } }
-        public bool _IsPlay { get { return _isPlay; } set { _isPlay = value; } }
+        public bool _IsPlay { get { return _isPlay; } }
 
         const int _userCnt = 4;
 
@@ -42,12 +42,11 @@ namespace Server_Scientia
         public bool _IsFinalTurn { get { return _isFinalTurn; } set { _isFinalTurn = value; } }
 
         DateTime _gameStartTime;
-        public DateTime _GameStartTime { get { return _gameStartTime; } set { _gameStartTime = value; } }
+        public DateTime _GameStartTime { get { return _gameStartTime; } }
 
         CardInfo _cardInfo = new CardInfo();
 
         public CardInfo _CardDeck { get { return _cardInfo; } }
-        public bool _IsCardEmpty { get { return _cardInfo._IsEmpty; } }
 
         public void InitRoomInfo(int roomNumber, string name, bool isLock, string pw, string mode, string rule)
         {   
@@ -60,18 +59,22 @@ namespace Server_Scientia
             _currentMemberCnt = 0;
             _master = 0;
 
+            for(int n = 0; n < _userArr.Length; n++)
+            {
+                if (_userArr[n] == null)
+                    _userArr[n] = new UserInfo();
+            }
+
             _cardInfo.InitCardDeck();
         }
 
-        public void AddUser(UserInfo user)
+        public void AddUser(long uuid, string nickName, int characterIndex, int level)
         {
             for(int n = 0; n < _userArr.Length; n++)
             {
-                if(_userArr[n] == null || _userArr[n]._IsEmpty)
+                if(_userArr[n] != null && _userArr[n]._IsEmpty)
                 {
-                    _userArr[n] = user;
-                    _userArr[n]._Index = n;
-                    _userArr[n]._IsEmpty = false;
+                    _userArr[n].InitUserInfo(uuid, nickName, characterIndex, level, n);
                     _currentMemberCnt++;
                     break;
                 }  
@@ -87,6 +90,30 @@ namespace Server_Scientia
             }
 
             return null;
+        }
+
+        public void UserReady(int userIndex)
+        {
+            _userArr[userIndex]._IsReady = !_userArr[userIndex]._IsReady;
+        }
+
+        public void UserFinishReadCard(int userIndex)
+        {
+            _userArr[userIndex]._IsFinishReadCard = true;
+        }
+
+        public void GameStart()
+        {
+            _maxSkillCube = 8;
+            _maxFlaskCube = 30;
+            _isPlay = true;
+            _gameStartTime = DateTime.Now;
+
+            for (int n = 0; n < _userArr.Length; n++)
+            {
+                if (_userArr[n] != null && !_userArr[n]._IsEmpty)
+                    _userArr[n].GameStart();
+            }
         }
 
         public bool CheckAllFinishGameOver()
